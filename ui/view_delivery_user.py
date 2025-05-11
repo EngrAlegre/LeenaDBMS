@@ -1,5 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QTableWidgetItem, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
+import sqlite3
 
 class ViewDeliveryUserScreen(object):
     def __init__(self, main_window):
@@ -153,61 +154,95 @@ class ViewDeliveryUserScreen(object):
             
         # Get the organization ID for this user
         org_id = None
-        orgs = self.database.get_all_organizations()
-        for org in orgs:
-            if org[3] == f"{self.user[2]} {self.user[3]}":  # Check if contact person matches user's name
-                org_id = org[0]
-                break
+        
+        try:
+            # Get filter values
+            filter_by = self.filter_combo.currentText().lower() if self.filter_combo.currentText() != "All" else None
+            search_term = self.search_field.text() if self.search_field.text() else None
+            
+            # Connect directly to the database
+            conn = sqlite3.connect("donationdriveDBMS.db")
+            cursor = conn.cursor()
+            
+            # First find the organization for this user
+            # Using direct query to find the org_id for the current user
+            cursor.execute("""
+                SELECT o.org_id
+                FROM org_info o
+                JOIN accounts a ON o.user_code = a.user_code
+                WHERE a.user_code = ?
+            """, (self.user[0],))
+            
+            org_result = cursor.fetchone()
+            if not org_result:
+                conn.close()
+                return  # No organization found for this user
                 
-        if not org_id:
-            return  # No organization found for this user
-        
-        # Get filter values
-        filter_by = self.filter_combo.currentText().lower() if self.filter_combo.currentText() != "All" else None
-        search_term = self.search_field.text() if self.search_field.text() else None
-        
-        # Get deliveries for this organization
-        deliveries = self.database.get_deliveries_by_org(org_id, filter_by)
-        
-        # Clear the table
-        self.delivery_table.setRowCount(0)
-        
-        # Populate the table
-        row = 0
-        for delivery in deliveries:
-            # The database structure is incorrect - date and foodList_id are swapped:
-            # delivery[0] = delivery_id
-            # delivery[1] = departure_time
-            # delivery[2] = date (currently None)
-            # delivery[3] = foodList_id (actually contains the date)
-            # delivery[4] = location_id
-            # delivery[5] = org_id
-            # delivery[6] = food_list_name
-            # delivery[7] = org_name
-            # delivery[8] = location_name
+            org_id = org_result[0]
             
-            delivery_id = delivery[0]
-            departure_time = delivery[1] if delivery[1] else "N/A"
+            # Now get the deliveries for this organization
+            query = """
+                SELECT 
+                    d.delivery_id, 
+                    d.departure_time, 
+                    d.date, 
+                    l.location_name AS location, 
+                    f.name AS food_list 
+                FROM delivery d
+                JOIN food_list f ON d.foodList_id = f.foodList_id
+                JOIN location_info l ON d.location_id = l.location_id
+                WHERE d.org_id = ?
+            """
             
-            # Handle the swapped date and foodList_id fields
-            date = delivery[3] if isinstance(delivery[3], str) and "-" in delivery[3] else "None"  # Date is in foodList_id field
-            food_list_id = delivery[2] if isinstance(delivery[2], int) else (int(delivery[2]) if delivery[2] and delivery[2].isdigit() else None)
+            params = [org_id]
             
-            location = delivery[8]  # Location name is at index 8
-            food_list = delivery[6]  # Food list name is at index 6
-            
-            # If search term is specified, filter results
-            if search_term and search_term.lower() not in str(food_list).lower() and search_term.lower() not in str(location).lower():
-                continue
+            # Add filter conditions if needed
+            if filter_by == "past":
+                query += " AND date(d.date) < date('now')"
+            elif filter_by == "upcoming":
+                query += " AND date(d.date) >= date('now')"
                 
-            self.delivery_table.insertRow(row)
-            self.delivery_table.setItem(row, 0, QTableWidgetItem(str(delivery_id)))
-            self.delivery_table.setItem(row, 1, QTableWidgetItem(str(departure_time)))
-            self.delivery_table.setItem(row, 2, QTableWidgetItem(str(date)))
-            self.delivery_table.setItem(row, 3, QTableWidgetItem(str(location)))
-            self.delivery_table.setItem(row, 4, QTableWidgetItem(str(food_list)))
-            row += 1
+            if search_term:
+                query += f""" AND (
+                    f.name LIKE '%{search_term}%' OR 
+                    l.location_name LIKE '%{search_term}%'
+                )"""
+                
+            query += " ORDER BY d.date DESC"
             
+            # Execute query
+            cursor.execute(query, params)
+            deliveries = cursor.fetchall()
+            
+            # Clear the table
+            self.delivery_table.setRowCount(0)
+            
+            # Populate the table with exact column mapping
+            row = 0
+            for delivery in deliveries:
+                # Fields now exactly match display order from our query
+                delivery_id = delivery[0]
+                departure_time = delivery[1] if delivery[1] else "N/A"
+                date = delivery[2]
+                location = delivery[3]      # Location name is now directly at index 3
+                food_list = delivery[4]     # Food list name is now directly at index 4
+                
+                # Skip if search term is specified and doesn't match
+                if search_term and search_term.lower() not in str(food_list).lower() and search_term.lower() not in str(location).lower():
+                    continue
+                    
+                self.delivery_table.insertRow(row)
+                self.delivery_table.setItem(row, 0, QTableWidgetItem(str(delivery_id)))
+                self.delivery_table.setItem(row, 1, QTableWidgetItem(str(departure_time)))
+                self.delivery_table.setItem(row, 2, QTableWidgetItem(str(date)))
+                self.delivery_table.setItem(row, 3, QTableWidgetItem(str(location)))
+                self.delivery_table.setItem(row, 4, QTableWidgetItem(str(food_list)))
+                row += 1
+                
+            conn.close()
+        except Exception as e:
+            print(f"Error loading user deliveries: {e}")
+        
     def go_back(self):
         """Go back to the main menu"""
         self.main_window.show_user_menu(self.user) 

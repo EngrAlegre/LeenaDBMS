@@ -1,6 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QTableWidgetItem, QMessageBox
 from PyQt5.QtCore import QDate, QTime
+import sqlite3
 
 class EditDeliveryScreen(object):
     def __init__(self, main_window):
@@ -71,7 +72,7 @@ class EditDeliveryScreen(object):
         self.delivery_table.setGeometry(QtCore.QRect(190, 160, 921, 260))  # Adjust height since we removed the filter button
         self.delivery_table.setObjectName("delivery_table")
         self.delivery_table.setColumnCount(6)
-        self.delivery_table.setHorizontalHeaderLabels(["ID", "Delivery Time", "Date", "Location", "Organization", "Food List"])
+        self.delivery_table.setHorizontalHeaderLabels(["ID", "Delivery Time", "Date", "Organization", "Location", "Food List"])
         
         # Make columns stretch to fill available space
         header = self.delivery_table.horizontalHeader()
@@ -280,46 +281,76 @@ class EditDeliveryScreen(object):
         filter_by = self.filter_combo.currentText().lower() if self.filter_combo.currentText() != "All" else None
         search_term = self.search_field.text() if self.search_field.text() else None
         
-        # Get deliveries
-        deliveries = self.database.get_all_deliveries(filter_by, search_term)
-        
-        # Clear the table
-        self.delivery_table.setRowCount(0)
-        
-        # Populate the table
-        row = 0
-        for delivery in deliveries:
-            # The database structure is incorrect - date and foodList_id are swapped:
-            # delivery[0] = delivery_id
-            # delivery[1] = departure_time
-            # delivery[2] = date (currently None)
-            # delivery[3] = foodList_id (actually contains the date)
-            # delivery[4] = location_id
-            # delivery[5] = org_id
-            # delivery[6] = food_list_name
-            # delivery[7] = org_name
-            # delivery[8] = location_name
+        try:
+            # Connect directly to the database to control exactly what data we get
+            conn = sqlite3.connect("donationdriveDBMS.db")
+            cursor = conn.cursor()
             
-            delivery_id = delivery[0]
-            departure_time = delivery[1] if delivery[1] else "N/A"
+            # Use a direct query that explicitly gets fields in the order we want to display them
+            query = """
+                SELECT 
+                    d.delivery_id, 
+                    d.departure_time, 
+                    d.date, 
+                    o.name AS organization, 
+                    l.location_name AS location, 
+                    f.name AS food_list 
+                FROM delivery d
+                JOIN food_list f ON d.foodList_id = f.foodList_id
+                JOIN org_info o ON d.org_id = o.org_id
+                JOIN location_info l ON d.location_id = l.location_id
+            """
             
-            # Handle the swapped date and foodList_id fields
-            date = delivery[3] if isinstance(delivery[3], str) and "-" in delivery[3] else "None"  # Date is in foodList_id field
-            food_list_id = delivery[2] if isinstance(delivery[2], int) else (int(delivery[2]) if delivery[2] and delivery[2].isdigit() else None)
-            
-            location = delivery[8]  # Location name is at index 8
-            organization = delivery[7]  # Organization name is at index 7
-            food_list = delivery[6]  # Food list name is at index 6
+            # Add filter conditions if needed
+            where_clauses = []
+            if filter_by == "past":
+                where_clauses.append("date(d.date) < date('now')")
+            elif filter_by == "upcoming":
+                where_clauses.append("date(d.date) >= date('now')")
                 
-            self.delivery_table.insertRow(row)
-            self.delivery_table.setItem(row, 0, QTableWidgetItem(str(delivery_id)))
-            self.delivery_table.setItem(row, 1, QTableWidgetItem(str(departure_time)))
-            self.delivery_table.setItem(row, 2, QTableWidgetItem(str(date)))
-            self.delivery_table.setItem(row, 3, QTableWidgetItem(str(location)))
-            self.delivery_table.setItem(row, 4, QTableWidgetItem(str(organization)))
-            self.delivery_table.setItem(row, 5, QTableWidgetItem(str(food_list)))
-            row += 1
+            if search_term:
+                where_clauses.append(f"""(
+                    f.name LIKE '%{search_term}%' OR 
+                    o.name LIKE '%{search_term}%' OR 
+                    l.location_name LIKE '%{search_term}%'
+                )""")
+                
+            if where_clauses:
+                query += " WHERE " + " AND ".join(where_clauses)
+                
+            query += " ORDER BY d.date DESC"
             
+            # Execute query
+            cursor.execute(query)
+            deliveries = cursor.fetchall()
+            
+            # Clear the table
+            self.delivery_table.setRowCount(0)
+            
+            # Populate the table with exact column mapping
+            row = 0
+            for delivery in deliveries:
+                # Fields now exactly match display order from our query
+                delivery_id = delivery[0]
+                departure_time = delivery[1] if delivery[1] else "N/A"
+                date = delivery[2]
+                organization = delivery[3]  # Organization name is now directly at index 3
+                location = delivery[4]      # Location name is now directly at index 4
+                food_list = delivery[5]     # Food list name is now directly at index 5
+                
+                self.delivery_table.insertRow(row)
+                self.delivery_table.setItem(row, 0, QTableWidgetItem(str(delivery_id)))
+                self.delivery_table.setItem(row, 1, QTableWidgetItem(str(departure_time)))
+                self.delivery_table.setItem(row, 2, QTableWidgetItem(str(date)))
+                self.delivery_table.setItem(row, 3, QTableWidgetItem(str(organization)))
+                self.delivery_table.setItem(row, 4, QTableWidgetItem(str(location)))
+                self.delivery_table.setItem(row, 5, QTableWidgetItem(str(food_list)))
+                row += 1
+                
+            conn.close()
+        except Exception as e:
+            print(f"Error loading deliveries: {e}")
+    
     def on_selection_change(self):
         """Handle selection changes in the table"""
         selected_rows = self.delivery_table.selectedItems()
@@ -328,8 +359,8 @@ class EditDeliveryScreen(object):
             delivery_id = self.delivery_table.item(row, 0).text()
             departure_time = self.delivery_table.item(row, 1).text()
             date = self.delivery_table.item(row, 2).text()  # This is now the correct date from the table
-            location = self.delivery_table.item(row, 3).text()
-            organization = self.delivery_table.item(row, 4).text()
+            location = self.delivery_table.item(row, 4).text()
+            organization = self.delivery_table.item(row, 3).text()
             food_list = self.delivery_table.item(row, 5).text()
             
             self.selected_delivery_id = delivery_id
