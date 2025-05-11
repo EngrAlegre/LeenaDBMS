@@ -1,0 +1,369 @@
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QTableWidgetItem, QMessageBox
+from PyQt5.QtCore import QDate, QTime
+
+class EditDeliveryScreen(object):
+    def __init__(self, main_window):
+        self.main_window = main_window
+        self.database = main_window.database
+        self.user = None
+        self.selected_delivery_id = None
+        
+    def set_user(self, user):
+        self.user = user
+        self.load_deliveries()
+        self.load_data()
+        
+    def setupUi(self, Widget):
+        Widget.setObjectName("Widget")
+        Widget.resize(1301, 811)
+        
+        self.widget = QtWidgets.QWidget(Widget)
+        self.widget.setGeometry(QtCore.QRect(0, 0, 1301, 811))
+        self.widget.setStyleSheet("QWidget#widget{\n"
+"background-color:rgb(158, 198, 243);}")
+        self.widget.setObjectName("widget")
+        
+        # Title
+        self.label = QtWidgets.QLabel(self.widget)
+        self.label.setGeometry(QtCore.QRect(430, 20, 441, 61))
+        self.label.setStyleSheet("font: 36pt \"Century Gothic\"; color:rgb(76, 107, 140)")
+        self.label.setObjectName("label")
+        self.label.setText("EDIT DELIVERY")
+        
+        # Subtitle
+        self.label_2 = QtWidgets.QLabel(self.widget)
+        self.label_2.setGeometry(QtCore.QRect(430, 80, 451, 31))
+        self.label_2.setStyleSheet("font: 16pt \"Century Gothic\";color:\n"
+"rgb(71, 84, 111)")
+        self.label_2.setObjectName("label_2")
+        self.label_2.setText("Select a delivery to edit")
+        
+        # Filter section
+        self.label_3 = QtWidgets.QLabel(self.widget)
+        self.label_3.setGeometry(QtCore.QRect(190, 120, 121, 31))
+        self.label_3.setStyleSheet("font: 12pt \"Century Gothic\";")
+        self.label_3.setObjectName("label_3")
+        self.label_3.setText("FILTER BY:")
+        
+        # Filter combobox
+        self.filter_combo = QtWidgets.QComboBox(self.widget)
+        self.filter_combo.setGeometry(QtCore.QRect(320, 120, 251, 31))
+        self.filter_combo.setObjectName("filter_combo")
+        self.filter_combo.addItem("All")
+        self.filter_combo.addItem("Upcoming")
+        self.filter_combo.addItem("Past")
+        
+        # Search section
+        self.label_4 = QtWidgets.QLabel(self.widget)
+        self.label_4.setGeometry(QtCore.QRect(610, 120, 121, 31))
+        self.label_4.setStyleSheet("font: 12pt \"Century Gothic\";")
+        self.label_4.setObjectName("label_4")
+        self.label_4.setText("SEARCH:")
+        
+        # Search field
+        self.search_field = QtWidgets.QLineEdit(self.widget)
+        self.search_field.setGeometry(QtCore.QRect(730, 120, 381, 31))
+        self.search_field.setObjectName("search_field")
+        
+        # Apply filter button
+        self.apply_filter = QtWidgets.QPushButton(self.widget)
+        self.apply_filter.setGeometry(QtCore.QRect(950, 160, 161, 31))
+        self.apply_filter.setStyleSheet("border-radius: 10px;\n"
+"background-color:rgb(187, 216, 163);\n"
+"font: 75 12pt \"Century Gothic\";\n"
+"border: 2px solid green")
+        self.apply_filter.setObjectName("apply_filter")
+        self.apply_filter.setText("APPLY FILTER")
+        
+        # Table widget for deliveries
+        self.delivery_table = QtWidgets.QTableWidget(self.widget)
+        self.delivery_table.setGeometry(QtCore.QRect(190, 200, 921, 220))
+        self.delivery_table.setObjectName("delivery_table")
+        self.delivery_table.setColumnCount(6)
+        self.delivery_table.setHorizontalHeaderLabels(["ID", "Delivery Time", "Date", "Location", "Organization", "Food List"])
+        
+        # Make columns stretch to fill available space
+        header = self.delivery_table.horizontalHeader()
+        for i in range(6):
+            header.setSectionResizeMode(i, QtWidgets.QHeaderView.Stretch)
+            
+        # Edit section
+        self.edit_section = QtWidgets.QGroupBox(self.widget)
+        self.edit_section.setGeometry(QtCore.QRect(190, 430, 921, 340))
+        self.edit_section.setStyleSheet("QGroupBox{\n"
+"background-color: rgb(200, 220, 240);\n"
+"border: 2px solid rgb(76, 107, 140);\n"
+"border-radius: 10px;\n"
+"padding: 10px;\n"
+"}\n")
+        self.edit_section.setTitle("")
+        self.edit_section.setObjectName("edit_section")
+        
+        # Selected delivery label
+        self.selected_label = QtWidgets.QLabel(self.edit_section)
+        self.selected_label.setGeometry(QtCore.QRect(20, 20, 201, 31))
+        self.selected_label.setStyleSheet("font: 12pt \"Century Gothic\";")
+        self.selected_label.setObjectName("selected_label")
+        self.selected_label.setText("SELECTED DELIVERY:")
+        
+        self.selected_delivery_label = QtWidgets.QLabel(self.edit_section)
+        self.selected_delivery_label.setGeometry(QtCore.QRect(230, 20, 671, 31))
+        self.selected_delivery_label.setStyleSheet("font: 12pt \"Century Gothic\"; color: rgb(76, 107, 140)")
+        self.selected_delivery_label.setObjectName("selected_delivery_label")
+        self.selected_delivery_label.setText("None")
+        
+        # Date field
+        self.label_5 = QtWidgets.QLabel(self.edit_section)
+        self.label_5.setGeometry(QtCore.QRect(20, 70, 121, 21))
+        self.label_5.setStyleSheet("font: 12pt \"Century Gothic\";")
+        self.label_5.setObjectName("label_5")
+        self.label_5.setText("DATE")
+        
+        self.date_field = QtWidgets.QDateEdit(self.edit_section)
+        self.date_field.setGeometry(QtCore.QRect(20, 100, 201, 41))
+        self.date_field.setCalendarPopup(True)
+        self.date_field.setDate(QDate.currentDate())
+        self.date_field.setObjectName("date_field")
+        
+        # Departure Time field
+        self.label_6 = QtWidgets.QLabel(self.edit_section)
+        self.label_6.setGeometry(QtCore.QRect(250, 70, 181, 21))
+        self.label_6.setStyleSheet("font: 12pt \"Century Gothic\";")
+        self.label_6.setObjectName("label_6")
+        self.label_6.setText("DELIVERY TIME")
+        
+        self.departure_time = QtWidgets.QTimeEdit(self.edit_section)
+        self.departure_time.setGeometry(QtCore.QRect(250, 100, 201, 41))
+        self.departure_time.setTime(QTime(9, 0))  # Default 9:00 AM
+        self.departure_time.setObjectName("departure_time")
+        
+        # Food List field
+        self.label_8 = QtWidgets.QLabel(self.edit_section)
+        self.label_8.setGeometry(QtCore.QRect(20, 160, 151, 21))
+        self.label_8.setStyleSheet("font: 12pt \"Century Gothic\";")
+        self.label_8.setObjectName("label_8")
+        self.label_8.setText("FOOD LIST")
+        
+        self.food_list_combo = QtWidgets.QComboBox(self.edit_section)
+        self.food_list_combo.setGeometry(QtCore.QRect(20, 190, 201, 41))
+        self.food_list_combo.setObjectName("food_list_combo")
+        
+        # Location field
+        self.label_9 = QtWidgets.QLabel(self.edit_section)
+        self.label_9.setGeometry(QtCore.QRect(250, 160, 151, 21))
+        self.label_9.setStyleSheet("font: 12pt \"Century Gothic\";")
+        self.label_9.setObjectName("label_9")
+        self.label_9.setText("LOCATION")
+        
+        self.location_combo = QtWidgets.QComboBox(self.edit_section)
+        self.location_combo.setGeometry(QtCore.QRect(250, 190, 201, 41))
+        self.location_combo.setObjectName("location_combo")
+        
+        # Organization field
+        self.label_10 = QtWidgets.QLabel(self.edit_section)
+        self.label_10.setGeometry(QtCore.QRect(480, 160, 151, 21))
+        self.label_10.setStyleSheet("font: 12pt \"Century Gothic\";")
+        self.label_10.setObjectName("label_10")
+        self.label_10.setText("ORGANIZATION")
+        
+        self.org_combo = QtWidgets.QComboBox(self.edit_section)
+        self.org_combo.setGeometry(QtCore.QRect(480, 190, 201, 41))
+        self.org_combo.setObjectName("org_combo")
+        
+        # Update button
+        self.update_button = QtWidgets.QPushButton(self.edit_section)
+        self.update_button.setGeometry(QtCore.QRect(480, 250, 191, 61))
+        self.update_button.setStyleSheet("border-radius: 20px;\n"
+"background-color:rgb(187, 216, 163);\n"
+"font: 75 18pt \"Century Gothic\";\n"
+"border: 2px solid green")
+        self.update_button.setObjectName("update_button")
+        self.update_button.setText("UPDATE")
+        
+        # Back button
+        self.back_button = QtWidgets.QPushButton(self.widget)
+        self.back_button.setGeometry(QtCore.QRect(190, 780, 161, 31))
+        self.back_button.setStyleSheet("border-radius: 10px;\n"
+"background-color:rgb(255, 225, 189);\n"
+"font: 75 12pt \"Century Gothic\";\n"
+"border: 2px solid orange")
+        self.back_button.setObjectName("back_button")
+        self.back_button.setText("BACK")
+        
+        # Error message label
+        self.error_label = QtWidgets.QLabel(self.edit_section)
+        self.error_label.setGeometry(QtCore.QRect(20, 250, 441, 31))
+        self.error_label.setStyleSheet("font: 75 italic 12pt \"Century Gothic\";color:red;")
+        self.error_label.setText("")
+        self.error_label.setObjectName("error_label")
+        
+        # Connect the buttons to their functions
+        self.apply_filter.clicked.connect(self.apply_filters)
+        self.back_button.clicked.connect(self.go_back)
+        self.update_button.clicked.connect(self.update_delivery)
+        self.delivery_table.itemSelectionChanged.connect(self.on_selection_change)
+        
+    def load_data(self):
+        """Load data for dropdown menus"""
+        # Clear the comboboxes first
+        self.food_list_combo.clear()
+        self.location_combo.clear()
+        self.org_combo.clear()
+        
+        # Load food lists
+        food_lists = self.database.get_all_food_lists()
+        for food_list in food_lists:
+            self.food_list_combo.addItem(food_list[1], food_list[0])
+            
+        # Load locations
+        locations = self.database.get_all_locations()
+        for location in locations:
+            self.location_combo.addItem(location[1], location[0])
+            
+        # Load organizations
+        organizations = self.database.get_all_organizations()
+        for org in organizations:
+            self.org_combo.addItem(org[1], org[0])
+        
+    def load_deliveries(self):
+        """Load deliveries from the database"""
+        if not self.user:
+            return
+            
+        # Get filter values
+        filter_by = self.filter_combo.currentText().lower() if self.filter_combo.currentText() != "All" else None
+        search_term = self.search_field.text() if self.search_field.text() else None
+        
+        # Get deliveries
+        deliveries = self.database.get_all_deliveries(filter_by, search_term)
+        
+        # Clear the table
+        self.delivery_table.setRowCount(0)
+        
+        # Populate the table
+        row = 0
+        for delivery in deliveries:
+            # The database structure is incorrect - date and foodList_id are swapped:
+            # delivery[0] = delivery_id
+            # delivery[1] = departure_time
+            # delivery[2] = date (currently None)
+            # delivery[3] = foodList_id (actually contains the date)
+            # delivery[4] = location_id
+            # delivery[5] = org_id
+            # delivery[6] = food_list_name
+            # delivery[7] = org_name
+            # delivery[8] = location_name
+            
+            delivery_id = delivery[0]
+            departure_time = delivery[1] if delivery[1] else "N/A"
+            
+            # Handle the swapped date and foodList_id fields
+            date = delivery[3] if isinstance(delivery[3], str) and "-" in delivery[3] else "None"  # Date is in foodList_id field
+            food_list_id = delivery[2] if isinstance(delivery[2], int) else (int(delivery[2]) if delivery[2] and delivery[2].isdigit() else None)
+            
+            location = delivery[8]  # Location name is at index 8
+            organization = delivery[7]  # Organization name is at index 7
+            food_list = delivery[6]  # Food list name is at index 6
+                
+            self.delivery_table.insertRow(row)
+            self.delivery_table.setItem(row, 0, QTableWidgetItem(str(delivery_id)))
+            self.delivery_table.setItem(row, 1, QTableWidgetItem(str(departure_time)))
+            self.delivery_table.setItem(row, 2, QTableWidgetItem(str(date)))
+            self.delivery_table.setItem(row, 3, QTableWidgetItem(str(location)))
+            self.delivery_table.setItem(row, 4, QTableWidgetItem(str(organization)))
+            self.delivery_table.setItem(row, 5, QTableWidgetItem(str(food_list)))
+            row += 1
+            
+    def apply_filters(self):
+        """Apply filters to the deliveries table"""
+        self.load_deliveries()
+    
+    def on_selection_change(self):
+        """Handle selection changes in the table"""
+        selected_rows = self.delivery_table.selectedItems()
+        if selected_rows:
+            row = selected_rows[0].row()
+            delivery_id = self.delivery_table.item(row, 0).text()
+            departure_time = self.delivery_table.item(row, 1).text()
+            date = self.delivery_table.item(row, 2).text()  # This is now the correct date from the table
+            location = self.delivery_table.item(row, 3).text()
+            organization = self.delivery_table.item(row, 4).text()
+            food_list = self.delivery_table.item(row, 5).text()
+            
+            self.selected_delivery_id = delivery_id
+            self.selected_delivery_label.setText(f"ID: {delivery_id} - {date} at {location}")
+            
+            # Set form values
+            # Parse date (assuming format YYYY-MM-DD)
+            try:
+                year, month, day = map(int, date.split('-'))
+                self.date_field.setDate(QDate(year, month, day))
+            except:
+                self.date_field.setDate(QDate.currentDate())
+                
+            # Parse times (assuming format HH:MM)
+            try:
+                if departure_time != "N/A":
+                    hour, minute = map(int, departure_time.split(':'))
+                    self.departure_time.setTime(QTime(hour, minute))
+            except:
+                self.departure_time.setTime(QTime(9, 0))
+                
+            # Set comboboxes
+            # Find and select the right indices
+            self.select_combobox_item(self.location_combo, location)
+            self.select_combobox_item(self.org_combo, organization)
+            self.select_combobox_item(self.food_list_combo, food_list)
+        else:
+            self.selected_delivery_id = None
+            self.selected_delivery_label.setText("None")
+            self.date_field.setDate(QDate.currentDate())
+            self.departure_time.setTime(QTime(9, 0))
+    
+    def select_combobox_item(self, combobox, text):
+        """Select an item in a combobox by its text"""
+        index = combobox.findText(text)
+        if index >= 0:
+            combobox.setCurrentIndex(index)
+    
+    def update_delivery(self):
+        """Update the selected delivery information"""
+        if not self.selected_delivery_id:
+            QMessageBox.warning(self.widget, "Warning", "Please select a delivery to update")
+            return
+            
+        date = self.date_field.date().toString("yyyy-MM-dd")
+        departure_time = self.departure_time.time().toString("hh:mm")
+        
+        # Get IDs from comboboxes
+        food_list_id = self.food_list_combo.currentData()
+        location_id = self.location_combo.currentData()
+        org_id = self.org_combo.currentData()
+        
+        # Validate inputs
+        if not food_list_id or not location_id or not org_id:
+            self.error_label.setText("Please select all required fields")
+            return
+        
+        # Update delivery in database
+        success, error = self.database.update_delivery(
+            self.selected_delivery_id, 
+            departure_time, 
+            date, 
+            food_list_id, 
+            location_id, 
+            org_id
+        )
+        
+        if success:
+            QMessageBox.information(self.widget, "Success", "Delivery updated successfully!")
+            self.error_label.setText("")
+            self.load_deliveries()
+        else:
+            self.error_label.setText(f"Failed to update delivery: {error}")
+    
+    def go_back(self):
+        """Go back to the admin menu"""
+        self.selected_delivery_id = None
+        self.main_window.show_admin_menu(self.user) 

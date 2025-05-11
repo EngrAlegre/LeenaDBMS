@@ -1,0 +1,656 @@
+import sqlite3
+import os
+import random
+import string
+
+class Database:
+    DB_NAME = "donationdriveDBMS.db"
+    
+    def __init__(self):
+        """Initialize database connection and create tables if they don't exist"""
+        self.connection = sqlite3.connect(self.DB_NAME)
+        self.cursor = self.connection.cursor()
+        self.create_tables()
+    
+    def close(self):
+        """Close the database connection"""
+        if self.connection:
+            self.connection.close()
+    
+    def commit(self):
+        """Commit changes to the database"""
+        if self.connection:
+            self.connection.commit()
+    
+    def create_tables(self):
+        """Create all tables based on the ERD if they don't already exist"""
+        # Create accounts table
+        self.cursor.execute('''
+        CREATE TABLE IF NOT EXISTS accounts (
+            user_code VARCHAR(10) PRIMARY KEY,
+            username VARCHAR NOT NULL,
+            firstname VARCHAR NOT NULL,
+            lastname VARCHAR NOT NULL,
+            password VARCHAR NOT NULL,
+            cpassword VARCHAR NOT NULL,
+            typeofUser BOOLEAN NOT NULL
+        )
+        ''')
+        
+        # Create location_info table
+        self.cursor.execute('''
+        CREATE TABLE IF NOT EXISTS location_info (
+            location_id VARCHAR(2) PRIMARY KEY,
+            location_name VARCHAR(50) NOT NULL
+        )
+        ''')
+        
+        # Create org_info table
+        self.cursor.execute('''
+        CREATE TABLE IF NOT EXISTS org_info (
+            org_id INTEGER PRIMARY KEY,
+            name VARCHAR(50) NOT NULL,
+            user_code VARCHAR(10) NOT NULL,
+            location_id VARCHAR(2) NOT NULL,
+            FOREIGN KEY (user_code) REFERENCES accounts(user_code),
+            FOREIGN KEY (location_id) REFERENCES location_info(location_id)
+        )
+        ''')
+        
+        # Create food_list table
+        self.cursor.execute('''
+        CREATE TABLE IF NOT EXISTS food_list (
+            foodList_id INTEGER PRIMARY KEY,
+            name VARCHAR(50) NOT NULL,
+            description TEXT
+        )
+        ''')
+        
+        # Create products table
+        self.cursor.execute('''
+        CREATE TABLE IF NOT EXISTS products (
+            product_id INTEGER PRIMARY KEY,
+            product VARCHAR NOT NULL,
+            perishable BOOLEAN NOT NULL,
+            quantity INTEGER(20) NOT NULL
+        )
+        ''')
+        
+        # Create link_list table (joining table between food_list and products)
+        self.cursor.execute('''
+        CREATE TABLE IF NOT EXISTS link_list (
+            foodList_id INTEGER NOT NULL,
+            product_id INTEGER NOT NULL,
+            PRIMARY KEY (foodList_id, product_id),
+            FOREIGN KEY (foodList_id) REFERENCES food_list(foodList_id),
+            FOREIGN KEY (product_id) REFERENCES products(product_id)
+        )
+        ''')
+        
+        # Create delivery table
+        self.cursor.execute('''
+        CREATE TABLE IF NOT EXISTS delivery (
+            delivery_id INTEGER PRIMARY KEY,
+            departure_time TIME,
+            date DATE NOT NULL,
+            foodList_id INTEGER NOT NULL,
+            location_id VARCHAR(2) NOT NULL,
+            org_id INTEGER NOT NULL,
+            FOREIGN KEY (foodList_id) REFERENCES food_list(foodList_id),
+            FOREIGN KEY (location_id) REFERENCES location_info(location_id),
+            FOREIGN KEY (org_id) REFERENCES org_info(org_id)
+        )
+        ''')
+        
+        # Create donation_info table
+        self.cursor.execute('''
+        CREATE TABLE IF NOT EXISTS donation_info (
+            donation_id INTEGER PRIMARY KEY,
+            user_code VARCHAR(10) NOT NULL,
+            FOREIGN KEY (user_code) REFERENCES accounts(user_code)
+        )
+        ''')
+        
+        # Commit the changes
+        self.commit()
+    
+    def generate_id(self, type_id):
+        """Generate a unique ID for various entities"""
+        if type_id == "user":
+            # Generate a unique user code (10 characters alphanumeric)
+            while True:
+                user_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+                # Check if the user_code already exists
+                self.cursor.execute("SELECT COUNT(*) FROM accounts WHERE user_code = ?", (user_code,))
+                if self.cursor.fetchone()[0] == 0:
+                    return user_code
+        elif type_id == "product_list":
+            # Get the next available ID from food_list table
+            self.cursor.execute("SELECT MAX(foodList_id) FROM food_list")
+            max_id = self.cursor.fetchone()[0]
+            return 1 if max_id is None else max_id + 1
+        elif type_id == "delivery":
+            # Get the next available ID from delivery table
+            self.cursor.execute("SELECT MAX(delivery_id) FROM delivery")
+            max_id = self.cursor.fetchone()[0]
+            return 1 if max_id is None else max_id + 1
+        elif type_id == "org":
+            # Get the next available ID from org_info table
+            self.cursor.execute("SELECT MAX(org_id) FROM org_info")
+            max_id = self.cursor.fetchone()[0]
+            return 1 if max_id is None else max_id + 1
+        elif type_id == "product":
+            # Get the next available ID from products table
+            self.cursor.execute("SELECT MAX(product_id) FROM products")
+            max_id = self.cursor.fetchone()[0]
+            return 1 if max_id is None else max_id + 1
+        return None
+    
+    # ACCOUNT OPERATIONS
+    
+    def create_account(self, username, firstname, lastname, password, confirm_password, user_type):
+        """Create a new user account"""
+        # Generate user code
+        user_code = self.generate_id("user")
+        
+        # Check if username already exists
+        self.cursor.execute("SELECT COUNT(*) FROM accounts WHERE username = ?", (username,))
+        if self.cursor.fetchone()[0] > 0:
+            return None, "Username already exists"
+        
+        # Insert the new account
+        try:
+            self.cursor.execute(
+                "INSERT INTO accounts (user_code, username, firstname, lastname, password, cpassword, typeofUser) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (user_code, username, firstname, lastname, password, confirm_password, user_type)
+            )
+            self.commit()
+            return user_code, None
+        except Exception as e:
+            return None, str(e)
+    
+    def verify_login(self, username, password):
+        """Verify login credentials and return user information"""
+        try:
+            self.cursor.execute("SELECT * FROM accounts WHERE username = ? AND password = ?", 
+                           (username, password))
+            user = self.cursor.fetchone()
+            return user
+        except Exception as e:
+            return None
+    
+    def get_user_by_id(self, user_code):
+        """Get user information by user code"""
+        self.cursor.execute("SELECT * FROM accounts WHERE user_code = ?", (user_code,))
+        return self.cursor.fetchone()
+    
+    def update_user(self, user_code, username, firstname, lastname, password):
+        """Update user account information"""
+        try:
+            self.cursor.execute(
+                "UPDATE accounts SET username = ?, firstname = ?, lastname = ?, password = ?, cpassword = ? WHERE user_code = ?",
+                (username, firstname, lastname, password, password, user_code)
+            )
+            self.commit()
+            return True, None
+        except Exception as e:
+            return False, str(e)
+    
+    # LOCATION OPERATIONS
+    
+    def add_location(self, location_id, location_name):
+        """Add a new location"""
+        try:
+            self.cursor.execute(
+                "INSERT INTO location_info (location_id, location_name) VALUES (?, ?)",
+                (location_id, location_name)
+            )
+            self.commit()
+            return True, None
+        except Exception as e:
+            return False, str(e)
+    
+    def get_all_locations(self):
+        """Get all locations"""
+        self.cursor.execute("SELECT * FROM location_info ORDER BY location_name")
+        return self.cursor.fetchall()
+    
+    # ORGANIZATION OPERATIONS
+    
+    def add_organization(self, name, user_code, location_id):
+        """Add a new organization"""
+        org_id = self.generate_id("org")
+        try:
+            self.cursor.execute(
+                "INSERT INTO org_info (org_id, name, user_code, location_id) VALUES (?, ?, ?, ?)",
+                (org_id, name, user_code, location_id)
+            )
+            self.commit()
+            return org_id, None
+        except Exception as e:
+            return None, str(e)
+    
+    def get_all_organizations(self, search_term=None):
+        """Get all organizations with optional search filter"""
+        query = """
+            SELECT o.org_id, o.name, l.location_name, a.firstname || ' ' || a.lastname AS contact_person
+            FROM org_info o
+            JOIN location_info l ON o.location_id = l.location_id
+            JOIN accounts a ON o.user_code = a.user_code
+        """
+        
+        if search_term:
+            query += f"""
+                WHERE (o.name LIKE '%{search_term}%' 
+                OR l.location_name LIKE '%{search_term}%' 
+                OR a.firstname LIKE '%{search_term}%'
+                OR a.lastname LIKE '%{search_term}%')
+            """
+        
+        query += " ORDER BY o.name"
+        
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+    
+    def get_non_government_organizations(self, search_term=None):
+        """Get non-government organizations with optional search filter"""
+        query = """
+            SELECT o.org_id, o.name, l.location_name, a.firstname || ' ' || a.lastname AS contact_person
+            FROM org_info o
+            JOIN location_info l ON o.location_id = l.location_id
+            JOIN accounts a ON o.user_code = a.user_code
+            WHERE (o.name NOT LIKE '%government%' AND o.name NOT LIKE '%govt%')
+        """
+        
+        if search_term:
+            query += f"""
+                AND (o.name LIKE '%{search_term}%' 
+                OR l.location_name LIKE '%{search_term}%' 
+                OR a.firstname LIKE '%{search_term}%'
+                OR a.lastname LIKE '%{search_term}%')
+            """
+        
+        query += " ORDER BY o.name"
+        
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+    
+    # PRODUCT OPERATIONS
+    
+    def add_product(self, product_name, perishable, quantity, product_id=None):
+        """Add a new product with optional specific ID"""
+        # If no product_id is provided, generate one
+        if product_id is None:
+            product_id = self.generate_id("product")
+        try:
+            self.cursor.execute(
+                "INSERT INTO products (product_id, product, perishable, quantity) VALUES (?, ?, ?, ?)",
+                (product_id, product_name, perishable, quantity)
+            )
+            self.commit()
+            return product_id, None
+        except Exception as e:
+            return None, str(e)
+    
+    def get_all_products(self):
+        """Get all products"""
+        self.cursor.execute("SELECT * FROM products ORDER BY product")
+        return self.cursor.fetchall()
+    
+    def update_product(self, product_id, product_name, perishable, quantity):
+        """Update product information"""
+        try:
+            self.cursor.execute(
+                "UPDATE products SET product = ?, perishable = ?, quantity = ? WHERE product_id = ?",
+                (product_name, perishable, quantity, product_id)
+            )
+            self.commit()
+            return True, None
+        except Exception as e:
+            return False, str(e)
+    
+    def delete_product(self, product_id):
+        """Delete a product and its references in food lists"""
+        try:
+            # Begin a transaction
+            self.connection.execute("BEGIN TRANSACTION")
+            
+            # First delete from link_list table
+            self.cursor.execute("DELETE FROM link_list WHERE product_id = ?", (product_id,))
+            
+            # Then delete the product
+            self.cursor.execute("DELETE FROM products WHERE product_id = ?", (product_id,))
+            
+            self.connection.execute("COMMIT")
+            return True, None
+        except Exception as e:
+            self.connection.execute("ROLLBACK")
+            return False, str(e)
+    
+    # FOOD LIST OPERATIONS
+    
+    def add_food_list(self, name, description):
+        """Add a new food list"""
+        food_list_id = self.generate_id("product_list")
+        try:
+            self.cursor.execute(
+                "INSERT INTO food_list (foodList_id, name, description) VALUES (?, ?, ?)",
+                (food_list_id, name, description)
+            )
+            self.commit()
+            return food_list_id, None
+        except Exception as e:
+            return None, str(e)
+    
+    def add_product_to_food_list(self, food_list_id, product_id):
+        """Add a product to a food list"""
+        try:
+            self.cursor.execute(
+                "INSERT INTO link_list (foodList_id, product_id) VALUES (?, ?)",
+                (food_list_id, product_id)
+            )
+            self.commit()
+            return True, None
+        except Exception as e:
+            return False, str(e)
+    
+    def get_food_list(self, food_list_id):
+        """Get food list details and its products"""
+        # Get food list information
+        self.cursor.execute("SELECT * FROM food_list WHERE foodList_id = ?", (food_list_id,))
+        food_list = self.cursor.fetchone()
+        
+        if not food_list:
+            return None
+        
+        # Get products in the food list
+        self.cursor.execute("""
+            SELECT p.* FROM products p
+            JOIN link_list l ON p.product_id = l.product_id
+            WHERE l.foodList_id = ?
+        """, (food_list_id,))
+        products = self.cursor.fetchall()
+        
+        return {
+            "food_list": food_list,
+            "products": products
+        }
+    
+    def get_all_food_lists(self, search_term=None):
+        """Get all food lists with optional search filter"""
+        query = "SELECT * FROM food_list"
+        
+        if search_term:
+            query += f" WHERE name LIKE '%{search_term}%' OR description LIKE '%{search_term}%'"
+        
+        query += " ORDER BY name"
+        
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+    
+    def update_food_list(self, food_list_id, name, description):
+        """Update food list information"""
+        try:
+            self.cursor.execute(
+                "UPDATE food_list SET name = ?, description = ? WHERE foodList_id = ?",
+                (name, description, food_list_id)
+            )
+            self.commit()
+            return True, None
+        except Exception as e:
+            return False, str(e)
+    
+    def delete_food_list(self, food_list_id):
+        """Delete a food list and its product links"""
+        try:
+            # First check if food list is used in any delivery
+            self.cursor.execute("SELECT COUNT(*) FROM delivery WHERE foodList_id = ?", (food_list_id,))
+            if self.cursor.fetchone()[0] > 0:
+                return False, "Cannot delete food list as it is used in deliveries"
+            
+            # Delete product links
+            self.cursor.execute("DELETE FROM link_list WHERE foodList_id = ?", (food_list_id,))
+            
+            # Delete food list
+            self.cursor.execute("DELETE FROM food_list WHERE foodList_id = ?", (food_list_id,))
+            
+            self.commit()
+            return True, None
+        except Exception as e:
+            return False, str(e)
+    
+    # DELIVERY OPERATIONS
+    
+    def add_delivery(self, departure_time, arrival_time, date, food_list_id, location_id, org_id):
+        """Add a new delivery"""
+        delivery_id = self.generate_id("delivery")
+        try:
+            # Debug print to verify values
+            print(f"Adding delivery with: date={date}, foodList_id={food_list_id}, location_id={location_id}, org_id={org_id}")
+            
+            # IMPORTANT: The current database structure has date and foodList_id swapped
+            # The correct SQL should have date in the date field and food_list_id in foodList_id
+            self.cursor.execute(
+                """INSERT INTO delivery 
+                   (delivery_id, departure_time, date, foodList_id, location_id, org_id) 
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (delivery_id, departure_time, date, food_list_id, location_id, org_id)
+            )
+            self.commit()
+            
+            # Verify the insert worked correctly
+            self.cursor.execute("SELECT * FROM delivery WHERE delivery_id = ?", (delivery_id,))
+            inserted_data = self.cursor.fetchone()
+            print(f"Inserted data: {inserted_data}")
+            
+            return delivery_id, None
+        except Exception as e:
+            print(f"Error adding delivery: {e}")
+            return None, str(e)
+    
+    def get_delivery(self, delivery_id):
+        """Get delivery details"""
+        self.cursor.execute("""
+            SELECT d.*, f.name as food_list_name, o.name as org_name, l.location_name
+            FROM delivery d
+            JOIN food_list f ON d.foodList_id = f.foodList_id
+            JOIN org_info o ON d.org_id = o.org_id
+            JOIN location_info l ON d.location_id = l.location_id
+            WHERE d.delivery_id = ?
+        """, (delivery_id,))
+        return self.cursor.fetchone()
+    
+    def get_all_deliveries(self, filter_by=None, search_term=None):
+        """Get all deliveries with optional filters and search"""
+        query = """
+            SELECT d.*, f.name as food_list_name, o.name as org_name, l.location_name
+            FROM delivery d
+            JOIN food_list f ON d.foodList_id = f.foodList_id
+            JOIN org_info o ON d.org_id = o.org_id
+            JOIN location_info l ON d.location_id = l.location_id
+        """
+        
+        where_clause = []
+        
+        # Add filter condition if provided - modified to not use arrival_time
+        if filter_by == "completed":
+            # Since we're not using arrival_time, we can use date to determine if it's completed
+            where_clause.append("date(d.date) < date('now')")
+        elif filter_by == "ongoing" or filter_by == "upcoming":
+            where_clause.append("date(d.date) >= date('now')")
+        
+        # Add search condition if provided
+        if search_term:
+            search_condition = f"""(f.name LIKE '%{search_term}%' 
+                OR o.name LIKE '%{search_term}%' 
+                OR l.location_name LIKE '%{search_term}%')"""
+            where_clause.append(search_condition)
+        
+        # Combine where clauses
+        if where_clause:
+            query += " WHERE " + " AND ".join(where_clause)
+        
+        query += " ORDER BY d.date DESC"
+        
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+    
+    def get_deliveries_by_org(self, org_id, filter_by=None):
+        """Get deliveries for a specific organization"""
+        query = """
+            SELECT d.*, f.name as food_list_name, o.name as org_name, l.location_name
+            FROM delivery d
+            JOIN food_list f ON d.foodList_id = f.foodList_id
+            JOIN org_info o ON d.org_id = o.org_id
+            JOIN location_info l ON d.location_id = l.location_id
+            WHERE d.org_id = ?
+        """
+        
+        params = [org_id]
+        
+        # Add filter condition if provided - modified to not use arrival_time
+        if filter_by == "completed":
+            query += " AND date(d.date) < date('now')"
+        elif filter_by == "ongoing" or filter_by == "upcoming":
+            query += " AND date(d.date) >= date('now')"
+        
+        query += " ORDER BY d.date DESC"
+        
+        self.cursor.execute(query, params)
+        return self.cursor.fetchall()
+    
+    def update_delivery(self, delivery_id, departure_time, date, food_list_id, location_id, org_id):
+        """Update delivery information"""
+        try:
+            self.cursor.execute(
+                """UPDATE delivery SET 
+                   departure_time = ?, date = ?, 
+                   foodList_id = ?, location_id = ?, org_id = ?
+                   WHERE delivery_id = ?""",
+                (departure_time, date, food_list_id, location_id, org_id, delivery_id)
+            )
+            self.commit()
+            return True, None
+        except Exception as e:
+            return False, str(e)
+    
+    def delete_delivery(self, delivery_id):
+        """Delete a delivery"""
+        try:
+            self.cursor.execute("DELETE FROM delivery WHERE delivery_id = ?", (delivery_id,))
+            self.commit()
+            return True, None
+        except Exception as e:
+            return False, str(e)
+    
+    # DONATION OPERATIONS
+    
+    def add_donation(self, user_code):
+        """Add a new donation record"""
+        try:
+            self.cursor.execute(
+                "INSERT INTO donation_info (user_code) VALUES (?)",
+                (user_code,)
+            )
+            self.commit()
+            
+            # Get the generated donation_id
+            self.cursor.execute("SELECT last_insert_rowid()")
+            donation_id = self.cursor.fetchone()[0]
+            
+            return donation_id, None
+        except Exception as e:
+            return None, str(e)
+    
+    def get_donations_by_user(self, user_code):
+        """Get donations made by a specific user"""
+        self.cursor.execute("SELECT * FROM donation_info WHERE user_code = ?", (user_code,))
+        return self.cursor.fetchall()
+    
+    # HELPER METHODS
+    
+    def execute_query(self, query, params=None):
+        """Execute a custom query with optional parameters"""
+        try:
+            if params:
+                self.cursor.execute(query, params)
+            else:
+                self.cursor.execute(query)
+            
+            # Check if query is a SELECT
+            if query.strip().upper().startswith("SELECT"):
+                return self.cursor.fetchall()
+            else:
+                self.commit()
+                return True
+        except Exception as e:
+            return None
+
+
+# Initialize the database with some default data if it doesn't exist
+def initialize_database():
+    # Check if database file exists
+    if not os.path.exists(Database.DB_NAME):
+        db = Database()
+        
+        # Add default locations
+        locations = [
+            ("MN", "Manila"),
+            ("QC", "Quezon City"),
+            ("CL", "Caloocan"),
+            ("MK", "Makati"),
+            ("PA", "Pasay"),
+            ("TA", "Taguig"),
+            ("MM", "Marikina"),
+            ("PQ", "Parañaque"),
+            ("MU", "Muntinlupa"),
+            ("VC", "Valenzuela")
+        ]
+        
+        for loc_id, loc_name in locations:
+            db.add_location(loc_id, loc_name)
+        
+        # Add default admin account
+        db.create_account(
+            username="admin_pedro",
+            firstname="Pedro",
+            lastname="Garcia",
+            password="password123",
+            confirm_password="password123",
+            user_type=1  # 1 for admin
+        )
+        
+        # Add default user account
+        user_code, _ = db.create_account(
+            username="ngo_careph",
+            firstname="Marco",
+            lastname="Reyes",
+            password="password123",
+            confirm_password="password123",
+            user_type=0  # 0 for regular user
+        )
+        
+        # Add an organization for the user
+        db.add_organization(
+            name="CARE Philippines",
+            user_code=user_code,
+            location_id="QC"
+        )
+        
+        # Add some sample products
+        db.add_product("Rice", 0, 1000)
+        db.add_product("Canned Goods", 0, 500)
+        db.add_product("Bread", 1, 200)
+        db.add_product("Milk", 1, 300)
+        db.add_product("Bottled Water", 0, 1000)
+        
+        db.close()
+        
+        print("Database initialized with default data.")
+    else:
+        print("Database already exists.")
+
+
+if __name__ == "__main__":
+    # Initialize the database if it doesn't exist
+    initialize_database() 
