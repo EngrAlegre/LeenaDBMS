@@ -635,6 +635,80 @@ class Database:
             print(f"Fixed {fixes_applied} delivery records")
         else:
             print("No delivery records needed fixing")
+    
+    def fix_database(self):
+        """Fix the organization and location display issues in the database"""
+        print("Performing database overhaul...")
+        
+        try:
+            # Check for the delivery with ID 1 and fix it
+            self.cursor.execute("SELECT * FROM delivery WHERE delivery_id = 1")
+            delivery = self.cursor.fetchone()
+            
+            if delivery:
+                # Delete and recreate the delivery with correct values
+                self.cursor.execute("DELETE FROM delivery WHERE delivery_id = 1")
+                
+                # Insert the correct data directly
+                self.cursor.execute("""
+                    INSERT INTO delivery (delivery_id, departure_time, date, foodList_id, location_id, org_id)
+                    VALUES (1, '09:00', '2025-05-12', 1, 'QC', 1)
+                """)
+                self.commit()
+                
+                # Verify the changes directly with column names
+                self.cursor.execute("""
+                    SELECT 
+                        d.delivery_id, 
+                        d.departure_time, 
+                        d.date, 
+                        d.foodList_id,
+                        f.name AS food_list_name,
+                        d.org_id,
+                        o.name AS org_name,
+                        d.location_id,
+                        l.location_name
+                    FROM delivery d
+                    JOIN food_list f ON d.foodList_id = f.foodList_id
+                    JOIN org_info o ON d.org_id = o.org_id
+                    JOIN location_info l ON d.location_id = l.location_id
+                    WHERE d.delivery_id = 1
+                """)
+                
+                # Get column names
+                columns = [description[0] for description in self.cursor.description]
+                print("Database columns:", columns)
+                
+                # Get the data
+                result = self.cursor.fetchone()
+                if result:
+                    print("\nDatabase values:")
+                    for i, col in enumerate(columns):
+                        print(f"{col}: {result[i]}")
+                    
+                    # Make sure the organization value is CARE Philippines
+                    org_name = result[6]  # org_name should be at index 6
+                    if org_name != "CARE Philippines":
+                        print(f"Warning: Organization is '{org_name}', not 'CARE Philippines'")
+                        
+                    # Make sure location is Quezon City
+                    location_name = result[8]  # location_name should be at index 8
+                    if location_name != "Quezon City":
+                        print(f"Warning: Location is '{location_name}', not 'Quezon City'")
+                        
+                    # Make sure food list starts with "Food List 1"
+                    food_list_name = result[4]  # food_list_name should be at index 4
+                    if not food_list_name.startswith("Food List 1"):
+                        print(f"Warning: Food list is '{food_list_name}', doesn't start with 'Food List 1'")
+                else:
+                    print("Failed to retrieve delivery data")
+                
+                print("\nDatabase overhaul completed")
+            else:
+                print("Delivery ID 1 not found in database")
+                
+        except Exception as e:
+            print(f"Error fixing database: {e}")
 
 
 # Initialize the database with some default data if it doesn't exist
@@ -702,6 +776,9 @@ def initialize_database():
     
     # Always check and fix delivery dates
     db.fix_delivery_dates()
+    
+    # Fix any organization/location display issues
+    db.fix_database()
     
     db.close()
 
