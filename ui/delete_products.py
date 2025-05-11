@@ -7,9 +7,11 @@ class DeleteProductsScreen(object):
         self.database = main_window.database
         self.user = None
         self.selected_product_id = None
+        self.food_lists = []
         
     def set_user(self, user):
         self.user = user
+        self.load_food_lists()
         self.load_products()
         
     def setupUi(self, Widget):
@@ -63,8 +65,63 @@ class DeleteProductsScreen(object):
         self.subtitle_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
         self.main_layout.addLayout(self.subtitle_layout)
         
+        # Food List selection
+        self.food_list_layout = QHBoxLayout()
+        self.food_list_layout.setContentsMargins(0, 10, 0, 10)
+        self.food_list_layout.setSpacing(10)
+        
+        # Food List Label
+        self.list_label = QtWidgets.QLabel()
+        self.list_label.setStyleSheet("font: 14pt \"Century Gothic\";")
+        self.list_label.setObjectName("list_label")
+        self.list_label.setText("SELECT FOOD LIST:")
+        self.list_label.setMinimumWidth(170)
+        self.list_label.setMaximumWidth(170)
+        self.food_list_layout.addWidget(self.list_label)
+        
+        # Food List Dropdown
+        self.food_list_combo = QtWidgets.QComboBox()
+        self.food_list_combo.setMinimumHeight(35)
+        self.food_list_combo.setStyleSheet("""
+            QComboBox { 
+                font: 12pt "Century Gothic"; 
+                padding: 5px; 
+                border: 1px solid #76a5af;
+                border-radius: 4px;
+                background-color: white;
+            }
+            QComboBox::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 30px;
+                border-left-width: 1px;
+                border-left-color: #76a5af;
+                border-left-style: solid;
+                border-top-right-radius: 4px;
+                border-bottom-right-radius: 4px;
+            }
+            QComboBox::down-arrow {
+                width: 14px;
+                height: 14px;
+                background: transparent;
+                border-top: 5px solid #76a5af;
+                border-right: 5px solid transparent;
+                border-left: 5px solid transparent;
+                margin-right: 5px;
+            }
+        """)
+        self.food_list_combo.setObjectName("food_list_combo")
+        self.food_list_layout.addWidget(self.food_list_combo, 1)
+        
+        # Add some space after the dropdown
+        self.food_list_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Fixed, QSizePolicy.Minimum))
+        
+        self.main_layout.addLayout(self.food_list_layout)
+        
         # Search area
         self.search_layout = QHBoxLayout()
+        self.search_layout.setContentsMargins(0, 10, 0, 10)
+        self.search_layout.setSpacing(10)
         
         # Search label
         self.label_4 = QtWidgets.QLabel()
@@ -72,31 +129,73 @@ class DeleteProductsScreen(object):
         self.label_4.setObjectName("label_4")
         self.label_4.setText("SEARCH:")
         self.label_4.setMinimumWidth(80)
+        self.label_4.setMaximumWidth(80)
         self.search_layout.addWidget(self.label_4)
         
         # Search field
         self.search_field = QtWidgets.QLineEdit()
         self.search_field.setMinimumHeight(31)
+        self.search_field.setStyleSheet("""
+            QLineEdit { 
+                font: 12pt "Century Gothic"; 
+                padding: 5px; 
+                border: 1px solid #76a5af;
+                border-radius: 4px;
+                background-color: white;
+            }
+        """)
         self.search_field.setObjectName("search_field")
         self.search_layout.addWidget(self.search_field, 1)  # 1 is stretch factor
+        
+        # Add spacing before the button
+        self.search_layout.addItem(QSpacerItem(20, 20, QSizePolicy.Fixed, QSizePolicy.Minimum))
         
         # Apply filter button
         self.apply_filter = QtWidgets.QPushButton()
         self.apply_filter.setMinimumSize(QtCore.QSize(120, 31))
         self.apply_filter.setMaximumSize(QtCore.QSize(161, 31))
-        self.apply_filter.setStyleSheet("border-radius: 10px;\n"
-"background-color:rgb(187, 216, 163);\n"
-"font: 75 12pt \"Century Gothic\";\n"
-"border: 2px solid green")
+        self.apply_filter.setStyleSheet("""
+            QPushButton {
+                border-radius: 10px;
+                background-color: rgb(187, 216, 163);
+                font: 75 12pt "Century Gothic";
+                border: 2px solid green;
+                padding: 4px 8px;
+            }
+            QPushButton:hover {
+                background-color: rgb(200, 230, 180);
+            }
+        """)
         self.apply_filter.setObjectName("apply_filter")
-        self.apply_filter.setText("SEARCH")
+        self.apply_filter.setText("APPLY FILTER")
         self.search_layout.addWidget(self.apply_filter)
+        
+        # Add space at the end for alignment with food list dropdown
+        self.search_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Fixed, QSizePolicy.Minimum))
         
         self.main_layout.addLayout(self.search_layout)
         
         # Table widget for products
         self.product_table = QtWidgets.QTableWidget()
         self.product_table.setMinimumHeight(300)
+        self.product_table.setStyleSheet("""
+            QTableWidget {
+                background-color: white;
+                border: 1px solid #cccccc;
+                border-radius: 4px;
+                selection-background-color: #e6f2ff;
+            }
+            QHeaderView::section {
+                background-color: #f0f0f0;
+                border: 1px solid #cccccc;
+                padding: 4px;
+                font-weight: bold;
+            }
+            QTableWidget::item {
+                padding: 4px;
+                border-bottom: 1px solid #eeeeee;
+            }
+        """)
         self.product_table.setObjectName("product_table")
         self.product_table.setColumnCount(4)
         self.product_table.setHorizontalHeaderLabels(["ID", "Product Name", "Perishable", "Quantity"])
@@ -108,17 +207,24 @@ class DeleteProductsScreen(object):
         
         self.main_layout.addWidget(self.product_table, 1)  # 1 is stretch factor
         
+        # Add spacing between table and selection box
+        self.main_layout.addItem(QSpacerItem(20, 10, QSizePolicy.Minimum, QSizePolicy.Fixed))
+        
         # Selection area
         self.selection_layout = QHBoxLayout()
         
         # Selection box with background
         self.selection_box = QtWidgets.QGroupBox()
         self.selection_box.setMinimumHeight(50)
-        self.selection_box.setStyleSheet("QGroupBox{\n"
-"background-color: rgb(200, 220, 240);\n"
-"border: 2px solid rgb(76, 107, 140);\n"
-"border-radius: 10px;\n"
-"}")
+        self.selection_box.setStyleSheet("""
+            QGroupBox {
+                background-color: rgb(220, 230, 240);
+                border: 1px solid rgb(76, 107, 140);
+                border-radius: 10px;
+                margin-top: 5px;
+                padding: 2px;
+            }
+        """)
         self.selection_box.setTitle("")
         self.selection_box.setObjectName("selection_box")
         
@@ -149,10 +255,17 @@ class DeleteProductsScreen(object):
         self.back_button = QtWidgets.QPushButton()
         self.back_button.setMinimumSize(QtCore.QSize(161, 41))
         self.back_button.setMaximumSize(QtCore.QSize(161, 41))
-        self.back_button.setStyleSheet("border-radius: 10px;\n"
-"background-color:rgb(255, 225, 189);\n"
-"font: 75 12pt \"Century Gothic\";\n"
-"border: 2px solid orange")
+        self.back_button.setStyleSheet("""
+            QPushButton {
+                border-radius: 20px;
+                background-color: rgb(255, 225, 189);
+                font: 75 16pt "Century Gothic";
+                border: none;
+            }
+            QPushButton:hover {
+                background-color: rgb(255, 235, 210);
+            }
+        """)
         self.back_button.setObjectName("back_button")
         self.back_button.setText("BACK")
         self.buttons_layout.addWidget(self.back_button)
@@ -164,10 +277,18 @@ class DeleteProductsScreen(object):
         self.delete_button = QtWidgets.QPushButton()
         self.delete_button.setMinimumSize(QtCore.QSize(191, 61))
         self.delete_button.setMaximumSize(QtCore.QSize(250, 61))
-        self.delete_button.setStyleSheet("border-radius: 20px;\n"
-"background-color:rgb(255, 100, 100);\n"
-"font: 75 18pt \"Century Gothic\";\n"
-"border: 2px solid rgb(200, 50, 50)")
+        self.delete_button.setStyleSheet("""
+            QPushButton {
+                border-radius: 20px;
+                background-color: rgb(255, 100, 100);
+                font: 75 18pt "Century Gothic";
+                border: none;
+                color: white;
+            }
+            QPushButton:hover {
+                background-color: rgb(255, 120, 120);
+            }
+        """)
         self.delete_button.setObjectName("delete_button")
         self.delete_button.setText("DELETE")
         self.buttons_layout.addWidget(self.delete_button)
@@ -178,22 +299,55 @@ class DeleteProductsScreen(object):
         self.main_layout.addLayout(self.buttons_layout)
         
         # Connect the buttons to their functions
-        self.apply_filter.clicked.connect(self.apply_search)
+        self.apply_filter.clicked.connect(self.load_products)
         self.back_button.clicked.connect(self.go_back)
         self.delete_button.clicked.connect(self.delete_product)
         self.product_table.itemSelectionChanged.connect(self.on_selection_change)
+        self.food_list_combo.currentIndexChanged.connect(self.food_list_changed)
         
         # Handle window resize events
         Widget.resizeEvent = self.on_resize
+        
+    def load_food_lists(self):
+        """Load food lists from database"""
+        if not self.user:
+            return
+            
+        # Get all food lists
+        self.food_lists = self.database.get_all_food_lists()
+        
+        # Clear and populate combo box
+        self.food_list_combo.clear()
+        
+        # Add an "All Products" option at the beginning
+        self.food_list_combo.addItem("All Products", None)
+        
+        # Add food lists to dropdown
+        for food_list in self.food_lists:
+            self.food_list_combo.addItem(food_list[1], food_list[0])
+    
+    def food_list_changed(self, index):
+        """Handle food list selection change"""
+        # Reload products when food list changes
+        self.load_products()
         
     def load_products(self):
         """Load products from database into the table"""
         if not self.user:
             return
-            
-        # Get products
-        products = self.database.get_all_products()
         
+        # Get selected food list ID (if any)
+        food_list_id = self.food_list_combo.currentData() if hasattr(self, 'food_list_combo') else None
+        
+        # Get products - either all or filtered by food list
+        if food_list_id:
+            # Get products for this specific food list
+            food_list_data = self.database.get_food_list(food_list_id)
+            products = food_list_data['products'] if food_list_data and 'products' in food_list_data else []
+        else:
+            # Get all products
+            products = self.database.get_all_products()
+            
         # Clear the table
         self.product_table.setRowCount(0)
         
@@ -209,7 +363,7 @@ class DeleteProductsScreen(object):
             quantity = product[3]
             
             # If search term is specified, filter results
-            if search_term and search_term not in product_name.lower():
+            if search_term and search_term.lower() not in product_name.lower():
                 continue
                 
             self.product_table.insertRow(row)
@@ -219,10 +373,6 @@ class DeleteProductsScreen(object):
             self.product_table.setItem(row, 3, QTableWidgetItem(str(quantity)))
             row += 1
             
-    def apply_search(self):
-        """Apply search filter to products table"""
-        self.load_products()
-    
     def on_selection_change(self):
         """Handle selection changes in the table"""
         selected_rows = self.product_table.selectedItems()

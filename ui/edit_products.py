@@ -1,5 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QTableWidgetItem, QMessageBox
+from ui.screen_helper import ScreenHelper
 
 class EditProductsScreen(object):
     def __init__(self, main_window):
@@ -192,6 +193,80 @@ class EditProductsScreen(object):
         self.update_button.clicked.connect(self.update_product)
         self.product_table.itemSelectionChanged.connect(self.on_selection_change)
         self.food_list_combo.currentIndexChanged.connect(self.food_list_changed)
+        
+        # Apply initial resizing
+        Widget.resizeEvent = self.handle_resize_event
+        
+    def handle_resize_event(self, event):
+        """Handle resize events for this widget"""
+        # Call parent resizeEvent
+        QtWidgets.QWidget.resizeEvent(self.widget.parent(), event)
+        
+        # Resize main widget to fill the entire parent
+        if self.widget.parent():
+            parent_width = self.widget.parent().width()
+            parent_height = self.widget.parent().height()
+            
+            # Resize the main widget to fill the window
+            self.widget.setGeometry(0, 0, parent_width, parent_height)
+            
+            # Center the title labels
+            center_x = int(parent_width / 2)
+            self.label.setGeometry(QtCore.QRect(int(center_x - 220), 30, 441, 81))
+            self.label_2.setGeometry(QtCore.QRect(int(center_x - 225), 100, 451, 41))
+            
+            # Calculate table and edit section positions
+            available_height = parent_height - 220  # Adjust for title & top spacing
+            
+            margin_x = int(max(50, (parent_width - 1100) / 2))  # Min 50px, max 1100px width
+            content_width = min(parent_width - 2 * margin_x, 1100)
+            
+            # Food list selector
+            self.list_label.setGeometry(QtCore.QRect(margin_x, 150, 210, 31))
+            combo_width = content_width - 220
+            self.food_list_combo.setGeometry(QtCore.QRect(margin_x + 220, 150, combo_width, 31))
+            
+            # Search controls
+            self.label_4.setGeometry(QtCore.QRect(margin_x, 200, 121, 31))
+            search_width = content_width - 290
+            self.search_field.setGeometry(QtCore.QRect(margin_x + 130, 200, search_width - 170, 31))
+            self.apply_filter.setGeometry(QtCore.QRect(
+                margin_x + 130 + search_width - 170 + 10, 200, 150, 31  # 10px gap
+            ))
+            
+            # Calculate appropriate heights
+            if available_height > 500:  # If enough vertical space
+                table_height = int(available_height * 0.3)  # 30% for table
+                edit_height = int(available_height * 0.5)  # 50% for edit box (reduced from 55%)
+                spacing = 20  # Space between elements
+            else:
+                # Minimum heights for smaller screens
+                table_height = 150
+                edit_height = 280
+                spacing = 10
+                
+            # Make sure heights are reasonable
+            table_height = max(150, table_height)
+            edit_height = max(280, edit_height)
+            
+            # Position elements
+            table_y = 250
+            edit_y = table_y + table_height + spacing
+            
+            # Table
+            self.product_table.setGeometry(QtCore.QRect(margin_x, table_y, content_width, table_height))
+            
+            # Edit section
+            self.edit_section.setGeometry(QtCore.QRect(margin_x, edit_y, content_width, edit_height))
+            
+            # Back button - position at bottom left with increased spacing
+            back_button_y = edit_y + edit_height + 30  # Increased spacing from 'spacing' to fixed 30px
+            
+            # Safety check to keep button visible
+            if back_button_y > parent_height - 60:
+                back_button_y = parent_height - 60
+                
+            self.back_button.setGeometry(QtCore.QRect(margin_x, back_button_y, 161, 41))
         
     def load_food_lists(self):
         """Load food lists from database"""

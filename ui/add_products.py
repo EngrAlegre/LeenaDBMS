@@ -1,6 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMessageBox
 import random
+from ui.screen_helper import ScreenHelper
 
 class AddProductsScreen(object):
     def __init__(self, main_window):
@@ -109,6 +110,98 @@ class AddProductsScreen(object):
         self.save_button.clicked.connect(self.save_products)
         self.back_button.clicked.connect(self.go_back)
         
+        # Apply initial resizing
+        Widget.resizeEvent = self.handle_resize_event
+        
+    def handle_resize_event(self, event):
+        """Handle resize events for this widget"""
+        # Call parent resizeEvent
+        QtWidgets.QWidget.resizeEvent(self.widget.parent(), event)
+        
+        # Resize main widget to fill the entire parent
+        if self.widget.parent():
+            parent_width = self.widget.parent().width()
+            parent_height = self.widget.parent().height()
+            
+            # Resize the main widget to fill the window
+            self.widget.setGeometry(0, 0, parent_width, parent_height)
+            
+            # Center the title and subtitle
+            center_x = int(parent_width / 2)
+            self.label.setGeometry(QtCore.QRect(center_x - 245, 20, 490, 61))
+            self.label_2.setGeometry(QtCore.QRect(center_x - 245, 80, 490, 31))
+            
+            # Adjust the products box width and center it
+            box_width = min(parent_width - 100, 1150)  # Keep 50px margin on each side
+            box_x = int((parent_width - box_width) / 2)
+            self.products_box.setGeometry(QtCore.QRect(box_x, 180, int(box_width), 451))
+            
+            # Adjust status label to match products box
+            self.status_label.setGeometry(QtCore.QRect(box_x, 640, int(box_width), 30))
+            
+            # Position buttons
+            button_y = 680
+            
+            # Back button on left
+            back_button_x = int(parent_width * 0.3 - 80)
+            self.back_button.setGeometry(QtCore.QRect(back_button_x, button_y, 161, 61))
+            
+            # Save button on right
+            save_button_x = int(parent_width * 0.7 - 175)
+            self.save_button.setGeometry(QtCore.QRect(save_button_x, button_y, 350, 61))
+            
+            # Center error label
+            error_label_x = int(center_x - 235)
+            self.error_label.setGeometry(QtCore.QRect(error_label_x, 750, 471, 31))
+            
+            # Adjust food list selection controls
+            list_label_x = box_x
+            self.list_label.setGeometry(QtCore.QRect(list_label_x, 130, 210, 31))
+            
+            combo_width = int(box_width - 210 - 20)  # Subtract label width and some spacing
+            combo_x = list_label_x + 220
+            self.food_list_combo.setGeometry(QtCore.QRect(combo_x, 130, combo_width, 31))
+            
+            # Adjust form elements inside products box if needed
+            self.adjust_product_entries(int(box_width))
+        
+    def adjust_product_entries(self, box_width):
+        """Adjust the product entry fields based on available width"""
+        if not self.product_entries:
+            return
+            
+        # Calculate new widths for fields
+        name_width = int((box_width - 260) * 0.35)  # 35% of available space
+        
+        for i, entry in enumerate(self.product_entries):
+            y_offset = 20 + (i * 80)
+            
+            # Product Label (keep position)
+            entry['name_field'].setGeometry(QtCore.QRect(170, y_offset, name_width, 30))
+            
+            # Adjust position of perishable label based on name field
+            perishable_x = 180 + name_width + 10
+            perishable_label_x = int(perishable_x)
+            
+            # Update perishable label position if it exists
+            if 'perishable_label' in entry:
+                entry['perishable_label'].setGeometry(QtCore.QRect(perishable_label_x, y_offset, 130, 30))
+            
+            # Update radio button positions
+            radio_yes_x = int(perishable_x + 140)
+            radio_no_x = int(perishable_x + 220)
+            entry['perishable_yes'].setGeometry(QtCore.QRect(radio_yes_x, y_offset, 70, 30))
+            entry['perishable_no'].setGeometry(QtCore.QRect(radio_no_x, y_offset, 70, 30))
+            
+            # Adjust quantity position
+            quantity_x = int(perishable_x + 300)
+            if 'quantity_label' in entry:
+                entry['quantity_label'].setGeometry(QtCore.QRect(quantity_x, y_offset, 120, 30))
+            
+            quantity_field_x = int(quantity_x + 130)
+            if 'quantity_field' in entry:
+                entry['quantity_field'].setGeometry(QtCore.QRect(quantity_field_x, y_offset, 80, 30))
+        
     def create_product_entries(self):
         """Create 5 product entry forms"""
         self.product_entries = []
@@ -175,9 +268,12 @@ class AddProductsScreen(object):
             # Store references to all fields
             self.product_entries.append({
                 'id_label': product_id,
+                'product_label': product_label,
                 'name_field': name_field,
+                'perishable_label': perishable_label,
                 'perishable_yes': yes_radio,
                 'perishable_no': no_radio,
+                'quantity_label': quantity_label,
                 'quantity_field': quantity_field,
                 'button_group': button_group
             })

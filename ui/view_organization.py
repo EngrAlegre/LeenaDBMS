@@ -1,5 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QTableWidgetItem
+from ui.screen_helper import ScreenHelper
 
 class ViewOrganizationScreen(object):
     def __init__(self, main_window):
@@ -83,6 +84,57 @@ class ViewOrganizationScreen(object):
         # Connect the buttons to their functions
         self.apply_filter.clicked.connect(self.apply_search)
         self.back_button.clicked.connect(self.go_back)
+        
+        # Apply initial resizing
+        Widget.resizeEvent = self.handle_resize_event
+        
+    def handle_resize_event(self, event):
+        """Handle resize events for this widget"""
+        # Call parent resizeEvent
+        QtWidgets.QWidget.resizeEvent(self.widget.parent(), event)
+        
+        # Resize main widget to fill the entire parent
+        if self.widget.parent():
+            parent_width = self.widget.parent().width()
+            parent_height = self.widget.parent().height()
+            
+            # Resize the main widget to fill the window
+            self.widget.setGeometry(0, 0, parent_width, parent_height)
+            
+            # Adjust the table size based on the new window size
+            table_height = parent_height - 350  # Adjust based on spacing
+            if table_height > 200:  # Minimum table height
+                self.org_table.setFixedHeight(int(table_height))
+                
+            # Adjust table width and position
+            table_width = min(parent_width - 200, 1100)  # Reduce maximum width
+            table_x = int((parent_width - table_width) / 2)
+            self.org_table.setGeometry(QtCore.QRect(table_x, 250, int(table_width), int(table_height)))
+            
+            # Center the title labels
+            center_x = int(parent_width / 2)
+            self.label.setGeometry(QtCore.QRect(int(center_x - 300), 50, 601, 91))
+            self.label_2.setGeometry(QtCore.QRect(int(center_x - 225), 130, 451, 41))
+            
+            # Position search controls
+            search_y = 190
+            search_field_width = int(table_width - 300)
+            self.label_4.setGeometry(QtCore.QRect(table_x, search_y, 121, 31))
+            self.search_field.setGeometry(QtCore.QRect(table_x + 130, search_y, search_field_width, 31))
+            
+            # Position search button directly after search field
+            search_button_x = table_x + 130 + search_field_width + 10  # 10px gap
+            self.apply_filter.setGeometry(QtCore.QRect(search_button_x, search_y, 161, 31))
+            
+            # Position back button - fixed distance from left edge and bottom
+            back_button_margin = 50
+            back_button_y = int(table_height + 280)  # Position below table with padding
+            
+            # Ensure back button is visible even on smaller screens
+            if back_button_y > parent_height - 80:
+                back_button_y = parent_height - 80
+                
+            self.back_button.setGeometry(QtCore.QRect(table_x, back_button_y, 161, 41))
         
     def load_organizations(self):
         """Load organizations from database into the table"""

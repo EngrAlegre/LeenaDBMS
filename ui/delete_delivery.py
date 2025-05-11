@@ -1,5 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QTableWidgetItem, QMessageBox
+from PyQt5.QtWidgets import QTableWidgetItem, QMessageBox, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
+from ui.styles import *
 
 class DeleteDeliveryScreen(object):
     def __init__(self, main_window):
@@ -16,67 +17,105 @@ class DeleteDeliveryScreen(object):
         Widget.setObjectName("Widget")
         Widget.resize(1301, 811)
         
+        # Main widget with background - fill the entire parent widget
         self.widget = QtWidgets.QWidget(Widget)
-        self.widget.setGeometry(QtCore.QRect(0, 0, 1301, 811))
-        self.widget.setStyleSheet("QWidget#widget{\n"
-"background-color:rgb(158, 198, 243);}")
+        
+        # Use a layout for the parent Widget to ensure the background fills everything
+        layout = QVBoxLayout(Widget)
+        layout.setContentsMargins(0, 0, 0, 0)  # No margins to ensure full coverage
+        layout.setSpacing(0)
+        layout.addWidget(self.widget)
+        
+        self.widget.setStyleSheet(MAIN_BG_STYLE)
         self.widget.setObjectName("widget")
         
+        # Main layout for the content
+        self.main_layout = QVBoxLayout(self.widget)
+        self.main_layout.setContentsMargins(60, 30, 60, 30)
+        
+        # Title area
+        self.title_layout = QHBoxLayout()
+        self.title_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        
         # Title
-        self.label = QtWidgets.QLabel(self.widget)
-        self.label.setGeometry(QtCore.QRect(430, 50, 441, 91))
-        self.label.setStyleSheet("font: 36pt \"Century Gothic\"; color:rgb(76, 107, 140)")
+        self.label = QtWidgets.QLabel()
+        self.label.setStyleSheet(TITLE_STYLE)
         self.label.setObjectName("label")
         self.label.setText("DELETE DELIVERY")
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
+        
+        self.title_layout.addWidget(self.label)
+        self.title_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.main_layout.addLayout(self.title_layout)
         
         # Subtitle
-        self.label_2 = QtWidgets.QLabel(self.widget)
-        self.label_2.setGeometry(QtCore.QRect(430, 130, 451, 41))
-        self.label_2.setStyleSheet("font: 16pt \"Century Gothic\";color:\n"
-"rgb(71, 84, 111)")
+        self.subtitle_layout = QHBoxLayout()
+        self.subtitle_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        
+        self.label_2 = QtWidgets.QLabel()
+        self.label_2.setStyleSheet(SUBTITLE_STYLE)
         self.label_2.setObjectName("label_2")
         self.label_2.setText("Select a delivery to delete")
+        self.label_2.setAlignment(QtCore.Qt.AlignCenter)
+        
+        self.subtitle_layout.addWidget(self.label_2)
+        self.subtitle_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.main_layout.addLayout(self.subtitle_layout)
+        
+        # Filter and search area
+        self.filter_search_layout = QHBoxLayout()
+        self.filter_search_layout.setContentsMargins(0, 10, 0, 10)
+        self.filter_search_layout.setSpacing(10)
         
         # Filter section
-        self.label_3 = QtWidgets.QLabel(self.widget)
-        self.label_3.setGeometry(QtCore.QRect(190, 190, 121, 31))
-        self.label_3.setStyleSheet("font: 12pt \"Century Gothic\";")
+        self.label_3 = QtWidgets.QLabel()
+        self.label_3.setStyleSheet(LABEL_STYLE)
         self.label_3.setObjectName("label_3")
         self.label_3.setText("FILTER BY:")
+        self.label_3.setMinimumWidth(100)
+        self.label_3.setMaximumWidth(100)
+        self.filter_search_layout.addWidget(self.label_3)
         
         # Filter combobox
-        self.filter_combo = QtWidgets.QComboBox(self.widget)
-        self.filter_combo.setGeometry(QtCore.QRect(320, 190, 251, 31))
+        self.filter_combo = QtWidgets.QComboBox()
+        self.filter_combo.setMinimumWidth(150)
+        self.filter_combo.setMaximumWidth(250)
+        self.filter_combo.setMinimumHeight(35)
+        self.filter_combo.setStyleSheet(COMBOBOX_STYLE)
         self.filter_combo.setObjectName("filter_combo")
         self.filter_combo.addItem("All")
         self.filter_combo.addItem("Upcoming")
         self.filter_combo.addItem("Past")
+        self.filter_search_layout.addWidget(self.filter_combo)
+        
+        # Add spacing between filter and search
+        self.filter_search_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Fixed, QSizePolicy.Minimum))
         
         # Search section
-        self.label_4 = QtWidgets.QLabel(self.widget)
-        self.label_4.setGeometry(QtCore.QRect(610, 190, 121, 31))
-        self.label_4.setStyleSheet("font: 12pt \"Century Gothic\";")
+        self.label_4 = QtWidgets.QLabel()
+        self.label_4.setStyleSheet(LABEL_STYLE)
         self.label_4.setObjectName("label_4")
         self.label_4.setText("SEARCH:")
+        self.label_4.setMinimumWidth(80)
+        self.label_4.setMaximumWidth(80)
+        self.filter_search_layout.addWidget(self.label_4)
         
         # Search field
-        self.search_field = QtWidgets.QLineEdit(self.widget)
-        self.search_field.setGeometry(QtCore.QRect(730, 190, 381, 31))
+        self.search_field = QtWidgets.QLineEdit()
+        self.search_field.setMinimumHeight(35)
+        self.search_field.setStyleSheet(INPUT_STYLE)
         self.search_field.setObjectName("search_field")
+        self.filter_search_layout.addWidget(self.search_field, 1)  # 1 is stretch factor
         
-        # Apply filter button
-        self.apply_filter = QtWidgets.QPushButton(self.widget)
-        self.apply_filter.setGeometry(QtCore.QRect(950, 230, 161, 31))
-        self.apply_filter.setStyleSheet("border-radius: 10px;\n"
-"background-color:rgb(187, 216, 163);\n"
-"font: 75 12pt \"Century Gothic\";\n"
-"border: 2px solid green")
-        self.apply_filter.setObjectName("apply_filter")
-        self.apply_filter.setText("APPLY FILTER")
+        self.main_layout.addLayout(self.filter_search_layout)
+        
+        # Add spacing before table
+        self.main_layout.addItem(QSpacerItem(20, 10, QSizePolicy.Minimum, QSizePolicy.Fixed))
         
         # Table widget for deliveries
-        self.delivery_table = QtWidgets.QTableWidget(self.widget)
-        self.delivery_table.setGeometry(QtCore.QRect(190, 280, 921, 361))
+        self.delivery_table = QtWidgets.QTableWidget()
+        self.delivery_table.setMinimumHeight(300)
+        self.delivery_table.setStyleSheet(TABLE_STYLE)
         self.delivery_table.setObjectName("delivery_table")
         self.delivery_table.setColumnCount(6)
         self.delivery_table.setHorizontalHeaderLabels(["ID", "Delivery Time", "Date", "Location", "Organization", "Food List"])
@@ -86,52 +125,72 @@ class DeleteDeliveryScreen(object):
         for i in range(6):
             header.setSectionResizeMode(i, QtWidgets.QHeaderView.Stretch)
         
+        self.main_layout.addWidget(self.delivery_table, 1)  # 1 is stretch factor
+        
+        # Add spacing before selection box
+        self.main_layout.addItem(QSpacerItem(20, 10, QSizePolicy.Minimum, QSizePolicy.Fixed))
+        
         # Selection box with background
-        self.selection_box = QtWidgets.QGroupBox(self.widget)
-        self.selection_box.setGeometry(QtCore.QRect(190, 650, 921, 50))
-        self.selection_box.setStyleSheet("QGroupBox{\n"
-"background-color: rgb(200, 220, 240);\n"
-"border: 2px solid rgb(76, 107, 140);\n"
-"border-radius: 10px;\n"
-"}")
+        self.selection_box = QtWidgets.QGroupBox()
+        self.selection_box.setMinimumHeight(50)
+        self.selection_box.setStyleSheet(SELECTION_BOX_STYLE)
         self.selection_box.setTitle("")
         self.selection_box.setObjectName("selection_box")
         
+        # Layout for selection box
+        self.selection_box_layout = QHBoxLayout(self.selection_box)
+        self.selection_box_layout.setContentsMargins(10, 5, 10, 5)
+        
         # Selected delivery info
-        self.label_5 = QtWidgets.QLabel(self.selection_box)
-        self.label_5.setGeometry(QtCore.QRect(10, 10, 201, 31))
-        self.label_5.setStyleSheet("font: 12pt \"Century Gothic\";")
+        self.label_5 = QtWidgets.QLabel()
+        self.label_5.setStyleSheet(LABEL_BOLD_STYLE)
         self.label_5.setObjectName("label_5")
         self.label_5.setText("SELECTED DELIVERY:")
+        self.selection_box_layout.addWidget(self.label_5)
         
-        self.selected_delivery_label = QtWidgets.QLabel(self.selection_box)
-        self.selected_delivery_label.setGeometry(QtCore.QRect(220, 10, 691, 31))
+        self.selected_delivery_label = QtWidgets.QLabel()
         self.selected_delivery_label.setStyleSheet("font: 12pt \"Century Gothic\"; color: rgb(76, 107, 140)")
         self.selected_delivery_label.setObjectName("selected_delivery_label")
         self.selected_delivery_label.setText("None")
+        self.selection_box_layout.addWidget(self.selected_delivery_label, 1)
         
-        # Delete button
-        self.delete_button = QtWidgets.QPushButton(self.widget)
-        self.delete_button.setGeometry(QtCore.QRect(560, 700, 191, 61))
-        self.delete_button.setStyleSheet("border-radius: 20px;\n"
-"background-color:rgb(255, 100, 100);\n"
-"font: 75 18pt \"Century Gothic\";\n"
-"border: 2px solid rgb(200, 50, 50)")
-        self.delete_button.setObjectName("delete_button")
-        self.delete_button.setText("DELETE")
+        self.main_layout.addWidget(self.selection_box)
         
-        # Back button
-        self.back_button = QtWidgets.QPushButton(self.widget)
-        self.back_button.setGeometry(QtCore.QRect(190, 730, 161, 41))
-        self.back_button.setStyleSheet("border-radius: 10px;\n"
-"background-color:rgb(255, 225, 189);\n"
-"font: 75 12pt \"Century Gothic\";\n"
-"border: 2px solid orange")
+        # Add spacing before buttons
+        self.main_layout.addItem(QSpacerItem(20, 15, QSizePolicy.Minimum, QSizePolicy.Fixed))
+        
+        # Buttons area
+        self.buttons_layout = QHBoxLayout()
+        
+        # Back button (left-aligned)
+        self.back_button = QtWidgets.QPushButton()
+        self.back_button.setMinimumSize(QtCore.QSize(161, 41))
+        self.back_button.setMaximumSize(QtCore.QSize(161, 41))
+        self.back_button.setStyleSheet(SECONDARY_BUTTON_STYLE)
         self.back_button.setObjectName("back_button")
         self.back_button.setText("BACK")
+        self.buttons_layout.addWidget(self.back_button)
+        
+        # Add spacer to push delete button to center
+        self.buttons_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        
+        # Delete button (center-aligned)
+        self.delete_button = QtWidgets.QPushButton()
+        self.delete_button.setMinimumSize(QtCore.QSize(191, 61))
+        self.delete_button.setMaximumSize(QtCore.QSize(250, 61))
+        self.delete_button.setStyleSheet(DELETE_BUTTON_STYLE)
+        self.delete_button.setObjectName("delete_button")
+        self.delete_button.setText("DELETE")
+        self.buttons_layout.addWidget(self.delete_button)
+        
+        # Add spacer for symmetry
+        self.buttons_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        
+        self.main_layout.addLayout(self.buttons_layout)
         
         # Connect the buttons to their functions
-        self.apply_filter.clicked.connect(self.apply_filters)
+        self.filter_combo.currentTextChanged.connect(self.load_deliveries)
+        self.search_field.textChanged.connect(self.load_deliveries)
         self.back_button.clicked.connect(self.go_back)
         self.delete_button.clicked.connect(self.delete_delivery)
         self.delivery_table.itemSelectionChanged.connect(self.on_selection_change)
@@ -185,10 +244,6 @@ class DeleteDeliveryScreen(object):
             self.delivery_table.setItem(row, 5, QTableWidgetItem(str(food_list)))
             row += 1
             
-    def apply_filters(self):
-        """Apply filters to the deliveries table"""
-        self.load_deliveries()
-    
     def on_selection_change(self):
         """Handle selection changes in the table"""
         selected_rows = self.delivery_table.selectedItems()

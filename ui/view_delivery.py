@@ -1,5 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QTableWidgetItem
+from PyQt5.QtWidgets import QTableWidgetItem, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
+from ui.styles import *
 
 class ViewDeliveryScreen(object):
     def __init__(self, main_window):
@@ -15,67 +16,105 @@ class ViewDeliveryScreen(object):
         Widget.setObjectName("Widget")
         Widget.resize(1301, 811)
         
+        # Main widget with background - fill the entire parent widget
         self.widget = QtWidgets.QWidget(Widget)
-        self.widget.setGeometry(QtCore.QRect(0, 0, 1301, 811))
-        self.widget.setStyleSheet("QWidget#widget{\n"
-"background-color:rgb(158, 198, 243);}")
+        
+        # Use a layout for the parent Widget to ensure the background fills everything
+        layout = QVBoxLayout(Widget)
+        layout.setContentsMargins(0, 0, 0, 0)  # No margins to ensure full coverage
+        layout.setSpacing(0)
+        layout.addWidget(self.widget)
+        
+        self.widget.setStyleSheet(MAIN_BG_STYLE)
         self.widget.setObjectName("widget")
         
+        # Main layout for the content
+        self.main_layout = QVBoxLayout(self.widget)
+        self.main_layout.setContentsMargins(60, 30, 60, 30)
+        
+        # Title area
+        self.title_layout = QHBoxLayout()
+        self.title_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        
         # Title
-        self.label = QtWidgets.QLabel(self.widget)
-        self.label.setGeometry(QtCore.QRect(430, 50, 441, 91))
-        self.label.setStyleSheet("font: 36pt \"Century Gothic\"; color:rgb(76, 107, 140)")
+        self.label = QtWidgets.QLabel()
+        self.label.setStyleSheet(TITLE_STYLE)
         self.label.setObjectName("label")
         self.label.setText("VIEW DELIVERY")
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
+        
+        self.title_layout.addWidget(self.label)
+        self.title_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.main_layout.addLayout(self.title_layout)
         
         # Subtitle
-        self.label_2 = QtWidgets.QLabel(self.widget)
-        self.label_2.setGeometry(QtCore.QRect(430, 130, 451, 41))
-        self.label_2.setStyleSheet("font: 16pt \"Century Gothic\";color:\n"
-"rgb(71, 84, 111)")
+        self.subtitle_layout = QHBoxLayout()
+        self.subtitle_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        
+        self.label_2 = QtWidgets.QLabel()
+        self.label_2.setStyleSheet(SUBTITLE_STYLE)
         self.label_2.setObjectName("label_2")
         self.label_2.setText("All scheduled deliveries")
+        self.label_2.setAlignment(QtCore.Qt.AlignCenter)
+        
+        self.subtitle_layout.addWidget(self.label_2)
+        self.subtitle_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.main_layout.addLayout(self.subtitle_layout)
+        
+        # Filter and search area
+        self.filter_search_layout = QHBoxLayout()
+        self.filter_search_layout.setContentsMargins(0, 10, 0, 10)
+        self.filter_search_layout.setSpacing(10)
         
         # Filter section
-        self.label_3 = QtWidgets.QLabel(self.widget)
-        self.label_3.setGeometry(QtCore.QRect(190, 190, 121, 31))
-        self.label_3.setStyleSheet("font: 12pt \"Century Gothic\";")
+        self.label_3 = QtWidgets.QLabel()
+        self.label_3.setStyleSheet(LABEL_STYLE)
         self.label_3.setObjectName("label_3")
         self.label_3.setText("FILTER BY:")
+        self.label_3.setMinimumWidth(100)
+        self.label_3.setMaximumWidth(100)
+        self.filter_search_layout.addWidget(self.label_3)
         
         # Filter combobox
-        self.filter_combo = QtWidgets.QComboBox(self.widget)
-        self.filter_combo.setGeometry(QtCore.QRect(320, 190, 251, 31))
+        self.filter_combo = QtWidgets.QComboBox()
+        self.filter_combo.setMinimumWidth(150)
+        self.filter_combo.setMaximumWidth(250)
+        self.filter_combo.setMinimumHeight(35)
+        self.filter_combo.setStyleSheet(COMBOBOX_STYLE)
         self.filter_combo.setObjectName("filter_combo")
         self.filter_combo.addItem("All")
         self.filter_combo.addItem("Upcoming")
         self.filter_combo.addItem("Past")
+        self.filter_search_layout.addWidget(self.filter_combo)
+        
+        # Add spacing between filter and search
+        self.filter_search_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Fixed, QSizePolicy.Minimum))
         
         # Search section
-        self.label_4 = QtWidgets.QLabel(self.widget)
-        self.label_4.setGeometry(QtCore.QRect(610, 190, 121, 31))
-        self.label_4.setStyleSheet("font: 12pt \"Century Gothic\";")
+        self.label_4 = QtWidgets.QLabel()
+        self.label_4.setStyleSheet(LABEL_STYLE)
         self.label_4.setObjectName("label_4")
         self.label_4.setText("SEARCH:")
+        self.label_4.setMinimumWidth(80)
+        self.label_4.setMaximumWidth(80)
+        self.filter_search_layout.addWidget(self.label_4)
         
         # Search field
-        self.search_field = QtWidgets.QLineEdit(self.widget)
-        self.search_field.setGeometry(QtCore.QRect(730, 190, 381, 31))
+        self.search_field = QtWidgets.QLineEdit()
+        self.search_field.setMinimumHeight(35)
+        self.search_field.setStyleSheet(INPUT_STYLE)
         self.search_field.setObjectName("search_field")
+        self.filter_search_layout.addWidget(self.search_field, 1)  # 1 is stretch factor
         
-        # Apply filter button
-        self.apply_filter = QtWidgets.QPushButton(self.widget)
-        self.apply_filter.setGeometry(QtCore.QRect(950, 230, 161, 31))
-        self.apply_filter.setStyleSheet("border-radius: 10px;\n"
-"background-color:rgb(187, 216, 163);\n"
-"font: 75 12pt \"Century Gothic\";\n"
-"border: 2px solid green")
-        self.apply_filter.setObjectName("apply_filter")
-        self.apply_filter.setText("APPLY FILTER")
+        self.main_layout.addLayout(self.filter_search_layout)
+        
+        # Add spacing before table
+        self.main_layout.addItem(QSpacerItem(20, 10, QSizePolicy.Minimum, QSizePolicy.Fixed))
         
         # Table widget for deliveries
-        self.delivery_table = QtWidgets.QTableWidget(self.widget)
-        self.delivery_table.setGeometry(QtCore.QRect(190, 280, 921, 421))
+        self.delivery_table = QtWidgets.QTableWidget()
+        self.delivery_table.setMinimumHeight(350)
+        self.delivery_table.setStyleSheet(TABLE_STYLE)
         self.delivery_table.setObjectName("delivery_table")
         self.delivery_table.setColumnCount(6)
         self.delivery_table.setHorizontalHeaderLabels(["ID", "Delivery Time", "Date", "Location", "Organization", "Food List"])
@@ -85,18 +124,31 @@ class ViewDeliveryScreen(object):
         for i in range(6):
             header.setSectionResizeMode(i, QtWidgets.QHeaderView.Stretch)
         
-        # Back button
-        self.back_button = QtWidgets.QPushButton(self.widget)
-        self.back_button.setGeometry(QtCore.QRect(190, 730, 161, 41))
-        self.back_button.setStyleSheet("border-radius: 10px;\n"
-"background-color:rgb(255, 225, 189);\n"
-"font: 75 12pt \"Century Gothic\";\n"
-"border: 2px solid orange")
+        self.main_layout.addWidget(self.delivery_table, 1)  # 1 is stretch factor
+        
+        # Add spacing before back button
+        self.main_layout.addItem(QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Fixed))
+        
+        # Back button area
+        self.back_button_layout = QHBoxLayout()
+        
+        # Back button (left-aligned)
+        self.back_button = QtWidgets.QPushButton()
+        self.back_button.setMinimumSize(QtCore.QSize(161, 41))
+        self.back_button.setMaximumSize(QtCore.QSize(161, 41))
+        self.back_button.setStyleSheet(SECONDARY_BUTTON_STYLE)
         self.back_button.setObjectName("back_button")
         self.back_button.setText("BACK")
+        self.back_button_layout.addWidget(self.back_button)
+        
+        # Add spacer to push everything to the left
+        self.back_button_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        
+        self.main_layout.addLayout(self.back_button_layout)
         
         # Connect the buttons to their functions
-        self.apply_filter.clicked.connect(self.apply_filters)
+        self.filter_combo.currentTextChanged.connect(self.load_deliveries)
+        self.search_field.textChanged.connect(self.load_deliveries)
         self.back_button.clicked.connect(self.go_back)
         
     def load_deliveries(self):
@@ -148,10 +200,6 @@ class ViewDeliveryScreen(object):
             self.delivery_table.setItem(row, 5, QTableWidgetItem(str(food_list)))
             row += 1
             
-    def apply_filters(self):
-        """Apply filters to the deliveries table"""
-        self.load_deliveries()
-    
     def go_back(self):
         """Go back to the main menu"""
         if self.user[6]:  # User is admin

@@ -132,6 +132,70 @@ class CreateAccountScreen(object):
         self.create_button.clicked.connect(self.create_account)
         self.back_button.clicked.connect(self.go_back)
         
+        # Apply initial resizing
+        Widget.resizeEvent = self.handle_resize_event
+        
+    def handle_resize_event(self, event):
+        """Handle resize events for this widget"""
+        # Call parent resizeEvent
+        QtWidgets.QWidget.resizeEvent(self.widget.parent(), event)
+        
+        # Resize main widget to fill the entire parent
+        if self.widget.parent():
+            parent_width = self.widget.parent().width()
+            parent_height = self.widget.parent().height()
+            
+            # Resize the main widget to fill the window
+            self.widget.setGeometry(0, 0, parent_width, parent_height)
+            
+            # Center the title labels
+            center_x = int(parent_width / 2)
+            self.label.setGeometry(QtCore.QRect(int(center_x - 370), 60, 741, 171))
+            self.label_2.setGeometry(QtCore.QRect(int(center_x - 225), 170, 451, 61))
+            
+            # Form width remains fixed, but centered
+            form_width = 421
+            form_x = int(center_x - form_width / 2)
+            
+            # Username field
+            self.label_3.setGeometry(QtCore.QRect(form_x, 240, 121, 16))
+            self.username.setGeometry(QtCore.QRect(form_x, 260, form_width, 41))
+            
+            # First Name field
+            self.label_4.setGeometry(QtCore.QRect(form_x, 310, 151, 16))
+            self.firstname.setGeometry(QtCore.QRect(form_x, 330, form_width, 41))
+            
+            # Last Name field
+            self.label_5.setGeometry(QtCore.QRect(form_x, 380, 151, 16))
+            self.lastname.setGeometry(QtCore.QRect(form_x, 400, form_width, 41))
+            
+            # Password field
+            self.label_6.setGeometry(QtCore.QRect(form_x, 450, 151, 16))
+            self.password.setGeometry(QtCore.QRect(form_x, 470, form_width, 41))
+            
+            # Confirm Password field
+            self.label_7.setGeometry(QtCore.QRect(form_x, 520, 200, 16))
+            self.confirmpassword.setGeometry(QtCore.QRect(form_x, 540, form_width, 41))
+            
+            # User Type radio buttons
+            self.label_8.setGeometry(QtCore.QRect(form_x, 590, 151, 16))
+            self.admin_radio.setGeometry(QtCore.QRect(form_x, 620, 100, 30))
+            self.user_radio.setGeometry(QtCore.QRect(form_x + 120, 620, 100, 30))
+            
+            # Create Account button
+            button_width = 391
+            self.create_button.setGeometry(QtCore.QRect(int(center_x - button_width/2), 680, button_width, 61))
+            
+            # Calculate margin for left side
+            margin_x = max(50, int((parent_width - 1100) / 2))
+            
+            # Back button - keep it on the left side with proper margin
+            back_button_y = parent_height - 80  # Fixed distance from bottom
+            self.back_button.setGeometry(QtCore.QRect(margin_x, back_button_y, 161, 41))
+            
+            # Error message label - center under create button
+            self.error_label.setGeometry(QtCore.QRect(int(center_x - form_width/2), 750, form_width, 31))
+        
     def retranslateUi(self, Widget):
         _translate = QtCore.QCoreApplication.translate
         Widget.setWindowTitle(_translate("Widget", "Create Account"))

@@ -66,19 +66,9 @@ class EditDeliveryScreen(object):
         self.search_field.setGeometry(QtCore.QRect(730, 120, 381, 31))
         self.search_field.setObjectName("search_field")
         
-        # Apply filter button
-        self.apply_filter = QtWidgets.QPushButton(self.widget)
-        self.apply_filter.setGeometry(QtCore.QRect(950, 160, 161, 31))
-        self.apply_filter.setStyleSheet("border-radius: 10px;\n"
-"background-color:rgb(187, 216, 163);\n"
-"font: 75 12pt \"Century Gothic\";\n"
-"border: 2px solid green")
-        self.apply_filter.setObjectName("apply_filter")
-        self.apply_filter.setText("APPLY FILTER")
-        
         # Table widget for deliveries
         self.delivery_table = QtWidgets.QTableWidget(self.widget)
-        self.delivery_table.setGeometry(QtCore.QRect(190, 200, 921, 220))
+        self.delivery_table.setGeometry(QtCore.QRect(190, 160, 921, 260))  # Adjust height since we removed the filter button
         self.delivery_table.setObjectName("delivery_table")
         self.delivery_table.setColumnCount(6)
         self.delivery_table.setHorizontalHeaderLabels(["ID", "Delivery Time", "Date", "Location", "Organization", "Food List"])
@@ -199,11 +189,66 @@ class EditDeliveryScreen(object):
         self.error_label.setObjectName("error_label")
         
         # Connect the buttons to their functions
-        self.apply_filter.clicked.connect(self.apply_filters)
+        self.filter_combo.currentTextChanged.connect(self.load_deliveries)
+        self.search_field.textChanged.connect(self.load_deliveries)
         self.back_button.clicked.connect(self.go_back)
         self.update_button.clicked.connect(self.update_delivery)
         self.delivery_table.itemSelectionChanged.connect(self.on_selection_change)
         
+        # Apply initial resizing
+        Widget.resizeEvent = self.handle_resize_event
+        
+    def handle_resize_event(self, event):
+        """Handle resize events for this widget"""
+        # Call parent resizeEvent
+        QtWidgets.QWidget.resizeEvent(self.widget.parent(), event)
+        
+        # Resize main widget to fill the entire parent
+        if self.widget.parent():
+            parent_width = self.widget.parent().width()
+            parent_height = self.widget.parent().height()
+            
+            # Resize the main widget to fill the window
+            self.widget.setGeometry(0, 0, parent_width, parent_height)
+            
+            # Center the title labels
+            center_x = int(parent_width / 2)
+            self.label.setGeometry(QtCore.QRect(int(center_x - 220), 20, 441, 61))
+            self.label_2.setGeometry(QtCore.QRect(int(center_x - 225), 80, 451, 31))
+            
+            # Calculate margins and content width
+            margin_x = int(max(50, (parent_width - 1100) / 2))  # Min 50px, max 1100px width
+            content_width = min(parent_width - 2 * margin_x, 1100)
+            
+            # Position filter controls
+            self.label_3.setGeometry(QtCore.QRect(margin_x, 120, 121, 31))
+            self.filter_combo.setGeometry(QtCore.QRect(margin_x + 130, 120, 251, 31))
+            
+            # Position search controls
+            search_label_x = margin_x + 400
+            self.label_4.setGeometry(QtCore.QRect(search_label_x, 120, 121, 31))
+            
+            # Calculate search field width based on available space
+            search_field_width = content_width - 500  # Allow space for labels and margins
+            self.search_field.setGeometry(QtCore.QRect(search_label_x + 120, 120, search_field_width, 31))
+            
+            # Adjust table position and size
+            table_y = 160
+            self.delivery_table.setGeometry(QtCore.QRect(margin_x, table_y, content_width, 260))
+            
+            # Position edit section below table with spacing
+            edit_section_y = 210 + table_y
+            self.edit_section.setGeometry(QtCore.QRect(margin_x, edit_section_y, content_width, 340))
+            
+            # Position back button at bottom
+            back_button_y = edit_section_y + 340 + 20
+            
+            # Make sure back button stays visible
+            if back_button_y > parent_height - 50:
+                back_button_y = parent_height - 50
+                
+            self.back_button.setGeometry(QtCore.QRect(margin_x, back_button_y, 161, 31))
+    
     def load_data(self):
         """Load data for dropdown menus"""
         # Clear the comboboxes first
@@ -275,10 +320,6 @@ class EditDeliveryScreen(object):
             self.delivery_table.setItem(row, 5, QTableWidgetItem(str(food_list)))
             row += 1
             
-    def apply_filters(self):
-        """Apply filters to the deliveries table"""
-        self.load_deliveries()
-    
     def on_selection_change(self):
         """Handle selection changes in the table"""
         selected_rows = self.delivery_table.selectedItems()

@@ -17,6 +17,7 @@ from ui.delete_products import DeleteProductsScreen
 from ui.delete_delivery import DeleteDeliveryScreen
 from ui.edit_products import EditProductsScreen
 from ui.edit_delivery import EditDeliveryScreen
+from ui.screen_helper import ScreenHelper
 
 class DonationDriveApp(QtWidgets.QMainWindow):
     def __init__(self):
@@ -206,9 +207,41 @@ class DonationDriveApp(QtWidgets.QMainWindow):
         self.stacked_widget.setCurrentIndex(15)
 
     def resizeEvent(self, event):
-        """Handle window resize events and propagate to current screen"""
+        """Handle window resize events and resize all UI elements"""
         super().resizeEvent(event)
-        # The resize will automatically propagate to child widgets through layouts
+        
+        # Get current window size
+        width = self.width()
+        height = self.height()
+        
+        # Update each screen's main widget size
+        current_index = self.stacked_widget.currentIndex()
+        
+        for i in range(self.stacked_widget.count()):
+            screen_widget = self.stacked_widget.widget(i)
+            has_custom_handler = False
+            
+            # Check if the screen widget has its own custom resize handler
+            if hasattr(screen_widget, 'resizeEvent') and screen_widget.resizeEvent != QtWidgets.QWidget.resizeEvent:
+                has_custom_handler = True
+            
+            # Find main background widget (the one with objectName "widget")
+            for child in screen_widget.findChildren(QtWidgets.QWidget):
+                if hasattr(child, 'objectName') and child.objectName() == "widget":
+                    # Always resize the main widget to fill the screen
+                    child.setGeometry(0, 0, width, height)
+                    
+                    # For screens without custom handlers, apply our standard centering
+                    if not has_custom_handler:
+                        ScreenHelper.adjust_elements_for_width(child, original_width=1301, min_width=800)
+                    
+                    # If this is the current screen and it has a custom resize handler, trigger it
+                    if i == current_index and has_custom_handler:
+                        # Create a new resize event with current size
+                        new_event = QtGui.QResizeEvent(QtCore.QSize(width, height), event.oldSize())
+                        QtWidgets.QApplication.sendEvent(screen_widget, new_event)
+                    
+                    break
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

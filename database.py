@@ -473,7 +473,7 @@ class Database:
         where_clause = []
         
         # Add filter condition if provided - modified to not use arrival_time
-        if filter_by == "completed":
+        if filter_by == "completed" or filter_by == "past":
             # Since we're not using arrival_time, we can use date to determine if it's completed
             where_clause.append("date(d.date) < date('now')")
         elif filter_by == "ongoing" or filter_by == "upcoming":
@@ -509,7 +509,7 @@ class Database:
         params = [org_id]
         
         # Add filter condition if provided - modified to not use arrival_time
-        if filter_by == "completed":
+        if filter_by == "completed" or filter_by == "past":
             query += " AND date(d.date) < date('now')"
         elif filter_by == "ongoing" or filter_by == "upcoming":
             query += " AND date(d.date) >= date('now')"
@@ -585,14 +585,66 @@ class Database:
                 return True
         except Exception as e:
             return None
+            
+    def fix_delivery_dates(self):
+        """Fix any delivery records where date and foodList_id fields are swapped"""
+        print("Checking for delivery date issues...")
+        # Get all deliveries
+        query = "SELECT * FROM delivery"
+        all_deliveries = self.execute_query(query)
+        
+        if not all_deliveries:
+            print("No deliveries found. Nothing to fix.")
+            return
+        
+        fixes_applied = 0
+        
+        # For each delivery, check if the date and foodList_id are swapped
+        for delivery in all_deliveries:
+            delivery_id = delivery[0]
+            date_field = delivery[2]
+            foodlist_id_field = delivery[3]
+            
+            # Check if the date field is None and foodList_id contains a date string
+            is_date_in_foodlist = isinstance(foodlist_id_field, str) and "-" in foodlist_id_field
+            
+            if is_date_in_foodlist:
+                # The date is in the foodList_id field, so swap them
+                correct_date = foodlist_id_field
+                
+                # Try to determine the correct food list ID
+                # For this specific case, we'll set it to 1 since that's the typical value
+                correct_foodlist_id = 1
+                    
+                print(f"Fixing delivery ID {delivery_id}: date={correct_date}, foodList_id={correct_foodlist_id}")
+                
+                # Update the record in the database
+                update_query = """
+                    UPDATE delivery 
+                    SET date = ?, foodList_id = ? 
+                    WHERE delivery_id = ?
+                """
+                try:
+                    self.cursor.execute(update_query, (correct_date, correct_foodlist_id, delivery_id))
+                    self.commit()
+                    fixes_applied += 1
+                except Exception as e:
+                    print(f"Error fixing delivery ID {delivery_id}: {e}")
+        
+        if fixes_applied > 0:
+            print(f"Fixed {fixes_applied} delivery records")
+        else:
+            print("No delivery records needed fixing")
 
 
 # Initialize the database with some default data if it doesn't exist
 def initialize_database():
     # Check if database file exists
-    if not os.path.exists(Database.DB_NAME):
-        db = Database()
-        
+    db_exists = os.path.exists(Database.DB_NAME)
+    
+    db = Database()
+    
+    if not db_exists:
         # Add default locations
         locations = [
             ("MN", "Manila"),
@@ -644,11 +696,14 @@ def initialize_database():
         db.add_product("Milk", 1, 300)
         db.add_product("Bottled Water", 0, 1000)
         
-        db.close()
-        
         print("Database initialized with default data.")
     else:
         print("Database already exists.")
+    
+    # Always check and fix delivery dates
+    db.fix_delivery_dates()
+    
+    db.close()
 
 
 if __name__ == "__main__":
