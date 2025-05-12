@@ -275,6 +275,50 @@ class Database:
         self.cursor.execute(query)
         return self.cursor.fetchall()
     
+    def get_user_organization(self, user_code):
+        """Get the organization associated with a user by user_code"""
+        try:
+            query = """
+                SELECT o.org_id, o.name, l.location_id, l.location_name
+                FROM org_info o
+                JOIN location_info l ON o.location_id = l.location_id
+                WHERE o.user_code = ?
+            """
+            self.cursor.execute(query, (user_code,))
+            org_data = self.cursor.fetchone()
+            
+            # Print detailed debug info
+            print(f"Organization query for {user_code} returned: {org_data}")
+            
+            # If no organization found, create a default one
+            if not org_data:
+                print(f"No organization found for user {user_code}, creating default")
+                # Check if user exists and is not an admin
+                self.cursor.execute("SELECT * FROM accounts WHERE user_code = ? AND typeofUser = 0", (user_code,))
+                user = self.cursor.fetchone()
+                
+                if user:
+                    # Create a default organization for this user
+                    org_id = self.generate_id("org")
+                    try:
+                        self.cursor.execute(
+                            "INSERT INTO org_info (org_id, name, user_code, location_id) VALUES (?, ?, ?, ?)",
+                            (org_id, "CARE Philippines", user_code, "QC")
+                        )
+                        self.commit()
+                        print(f"Created default organization with ID {org_id}")
+                        
+                        # Retrieve the newly created organization
+                        self.cursor.execute(query, (user_code,))
+                        org_data = self.cursor.fetchone()
+                    except Exception as e:
+                        print(f"Error creating default organization: {str(e)}")
+            
+            return org_data
+        except Exception as e:
+            print(f"Error retrieving user organization: {str(e)}")
+            return None
+    
     # PRODUCT OPERATIONS
     
     def add_product(self, product_name, perishable, quantity, product_id=None):

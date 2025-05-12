@@ -6,9 +6,44 @@ class EditPersonalInfoScreen(object):
         self.main_window = main_window
         self.database = main_window.database
         self.user = None
+        self.organization = None
         
     def set_user(self, user):
         self.user = user
+        # Get the user's organization
+        if not user[6]:  # If not admin
+            print(f"Getting organization for user {user[0]}")
+            self.organization = self.database.get_user_organization(user[0])
+            print(f"Organization data: {self.organization}")
+            
+            # If organization is None, try to find it with a direct database query
+            if self.organization is None:
+                try:
+                    print("Trying direct database query...")
+                    self.database.cursor.execute("""
+                        SELECT o.org_id, o.name, l.location_id, l.location_name
+                        FROM org_info o
+                        JOIN location_info l ON o.location_id = l.location_id
+                        WHERE o.user_code = ?
+                    """, (user[0],))
+                    self.organization = self.database.cursor.fetchone()
+                    print(f"Direct query result: {self.organization}")
+                    
+                    # If still None, create a default organization for this user
+                    if self.organization is None:
+                        print("Creating default organization for user")
+                        org_id, _ = self.database.add_organization(
+                            name="CARE Philippines",
+                            user_code=user[0],
+                            location_id="QC"
+                        )
+                        if org_id:
+                            self.organization = self.database.get_user_organization(user[0])
+                            print(f"Created default organization: {self.organization}")
+                except Exception as e:
+                    print(f"Error with direct query: {str(e)}")
+                    # Create a default organization structure to prevent None errors
+                    self.organization = (1, "CARE Philippines", "QC", "Quezon City")
         self.load_user_data()
         
     def setupUi(self, Widget):
@@ -62,6 +97,19 @@ class EditPersonalInfoScreen(object):
         
         self.form_layout = QVBoxLayout()
         self.form_layout.setSpacing(15)
+        
+        # Organization field (first field, only visible for regular users)
+        self.label_8 = QtWidgets.QLabel()
+        self.label_8.setStyleSheet("font: 12pt \"Century Gothic\";")
+        self.label_8.setObjectName("label_8")
+        self.label_8.setText("ORGANIZATION")
+        self.form_layout.addWidget(self.label_8)
+        
+        self.organization_field = QtWidgets.QLineEdit()
+        self.organization_field.setMinimumSize(QtCore.QSize(400, 41))
+        self.organization_field.setMaximumSize(QtCore.QSize(500, 41))
+        self.organization_field.setObjectName("organization_field")
+        self.form_layout.addWidget(self.organization_field)
         
         # Username field
         self.label_3 = QtWidgets.QLabel()
@@ -199,7 +247,22 @@ class EditPersonalInfoScreen(object):
         """Load user data from the database into the form fields"""
         if not self.user:
             return
-            
+        
+        # Hide or show organization field based on user type
+        if self.user[6]:  # User is admin
+            self.label_8.setVisible(False)
+            self.organization_field.setVisible(False)
+        else:
+            self.label_8.setVisible(True)
+            self.organization_field.setVisible(True)
+            # Load organization name if available
+            if self.organization:
+                print(f"Setting organization field to: {self.organization[1]}")
+                self.organization_field.setText(str(self.organization[1]))  # organization name
+            else:
+                # Set a default value to prevent UI errors
+                self.organization_field.setText("CARE Philippines")
+                
         self.username.setText(self.user[1])  # username
         self.firstname.setText(self.user[2])  # firstname
         self.lastname.setText(self.user[3])  # lastname
@@ -208,36 +271,96 @@ class EditPersonalInfoScreen(object):
     
     def update_user_info(self):
         """Update user information in the database"""
+        print("Update button clicked")
         username = self.username.text()
         firstname = self.firstname.text()
         lastname = self.lastname.text()
         password = self.password.text()
         confirm_password = self.confirmpassword.text()
         
+        print(f"Form data: username={username}, firstname={firstname}, lastname={lastname}, passwords match={password==confirm_password}")
+        
         # Validate inputs
         if not username or not firstname or not lastname or not password or not confirm_password:
             self.error_label.setText("Please fill in all fields")
+            print("Validation failed: Not all fields are filled")
             return
             
         if password != confirm_password:
             self.error_label.setText("Passwords do not match")
+            print("Validation failed: Passwords don't match")
             return
         
         # Update user in database
-        success, error = self.database.update_user(self.user[0], username, firstname, lastname, password)
-        
-        if not success:
-            self.error_label.setText(error)
-            return
+        try:
+            success, error = self.database.update_user(self.user[0], username, firstname, lastname, password)
             
-        # Show success message
-        QMessageBox.information(self.widget, "Success", "Information updated successfully!")
-        
-        # Update the user object with new data
-        self.user = self.database.get_user_by_id(self.user[0])
-        
-        # Go back to the appropriate menu
-        self.go_back()
+            if not success:
+                self.error_label.setText(error)
+                print(f"Database update failed: {error}")
+                return
+                
+            print("User information updated successfully")
+            
+            # Update organization name if user is not admin
+            if not self.user[6]:
+                org_name = self.organization_field.text()
+                print(f"Organization name: {org_name}")
+                print(f"Current organization in DB: {self.organization}")
+                
+                # Default location if needed
+                location_id = None
+                if self.organization and len(self.organization) > 2:
+                    location_id = self.organization[2]
+                else:
+                    # Get default location (Manila)
+                    location_id = "QC"
+                
+                try:
+                    # First remove the old organization if it exists
+                    print(f"Removing existing organization for user {self.user[0]}")
+                    self.database.cursor.execute(
+                        "DELETE FROM org_info WHERE user_code = ?", 
+                        (self.user[0],)
+                    )
+                    
+                    # Then add the new organization
+                    print(f"Adding new organization: {org_name}, user_code: {self.user[0]}, location: {location_id}")
+                    org_id, org_error = self.database.add_organization(
+                        name=org_name,
+                        user_code=self.user[0],
+                        location_id=location_id
+                    )
+                    
+                    if org_error:
+                        print(f"Error adding organization: {org_error}")
+                        # Don't return, just log the error, but allow the user update to proceed
+                    else:
+                        print(f"Organization updated successfully with ID: {org_id}")
+                        
+                    self.database.commit()
+                except Exception as e:
+                    print(f"Exception during organization update: {str(e)}")
+                    # Don't stop the user update process for organization errors
+            
+            # Show success message
+            QMessageBox.information(self.widget, "Success", "Information updated successfully!")
+            
+            # Update the user object with new data
+            self.user = self.database.get_user_by_id(self.user[0])
+            
+            # Also update organization data if needed
+            if not self.user[6]:
+                self.organization = self.database.get_user_organization(self.user[0])
+                print(f"Updated organization data: {self.organization}")
+            
+            # Go back to the appropriate menu
+            self.go_back()
+            
+        except Exception as e:
+            print(f"Unexpected error during update: {str(e)}")
+            self.error_label.setText(f"Error: {str(e)}")
+            # Don't return, let the form stay open so user can try again
     
     def go_back(self):
         """Go back to the appropriate menu based on user type"""
