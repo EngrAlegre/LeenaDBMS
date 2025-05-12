@@ -9,6 +9,7 @@ class EditPersonalInfoScreen(object):
         self.organization = None
         
     def set_user(self, user):
+        print(f"EditPersonalInfo - set_user called with user: {user}")
         self.user = user
         # Get the user's organization
         if not user[6]:  # If not admin
@@ -291,9 +292,12 @@ class EditPersonalInfoScreen(object):
             print("Validation failed: Passwords don't match")
             return
         
+        # Store user_id for later refresh
+        user_id = self.user[0]
+        
         # Update user in database
         try:
-            success, error = self.database.update_user(self.user[0], username, firstname, lastname, password)
+            success, error = self.database.update_user(user_id, username, firstname, lastname, password)
             
             if not success:
                 self.error_label.setText(error)
@@ -318,17 +322,17 @@ class EditPersonalInfoScreen(object):
                 
                 try:
                     # First remove the old organization if it exists
-                    print(f"Removing existing organization for user {self.user[0]}")
+                    print(f"Removing existing organization for user {user_id}")
                     self.database.cursor.execute(
                         "DELETE FROM org_info WHERE user_code = ?", 
-                        (self.user[0],)
+                        (user_id,)
                     )
                     
                     # Then add the new organization
-                    print(f"Adding new organization: {org_name}, user_code: {self.user[0]}, location: {location_id}")
+                    print(f"Adding new organization: {org_name}, user_code: {user_id}, location: {location_id}")
                     org_id, org_error = self.database.add_organization(
                         name=org_name,
-                        user_code=self.user[0],
+                        user_code=user_id,
                         location_id=location_id
                     )
                     
@@ -346,24 +350,47 @@ class EditPersonalInfoScreen(object):
             # Show success message
             QMessageBox.information(self.widget, "Success", "Information updated successfully!")
             
-            # Update the user object with new data
-            self.user = self.database.get_user_by_id(self.user[0])
+            # Update the user object with new data - with error handling
+            try:
+                # Force a database refresh without caching
+                self.database.connection.commit()
+                
+                # Explicitly get updated user data
+                updated_user = self.database.get_user_by_id(user_id)
+                print(f"After update - retrieved user data: {updated_user}")
+                
+                # Only update if we got a valid user back
+                if updated_user:
+                    self.user = updated_user
+                    
+                    # Also update organization data if needed and user is not admin
+                    if self.user and not self.user[6]:
+                        try:
+                            self.organization = self.database.get_user_organization(user_id)
+                            print(f"Updated organization data: {self.organization}")
+                        except Exception as org_err:
+                            print(f"Error updating organization data: {str(org_err)}")
+                            # Continue even if organization update fails
+                else:
+                    print("Warning: Could not retrieve updated user data")
+            except Exception as user_err:
+                print(f"Error updating user data: {str(user_err)}")
+                # Continue even if we couldn't refresh the user data
             
-            # Also update organization data if needed
-            if not self.user[6]:
-                self.organization = self.database.get_user_organization(self.user[0])
-                print(f"Updated organization data: {self.organization}")
-            
-            # Go back to the appropriate menu
+            # Go back to the appropriate menu - with additional safety check
             self.go_back()
             
         except Exception as e:
             print(f"Unexpected error during update: {str(e)}")
             self.error_label.setText(f"Error: {str(e)}")
-            # Don't return, let the form stay open so user can try again
     
     def go_back(self):
         """Go back to the appropriate menu based on user type"""
+        if not self.user:
+            # Safety check - if somehow user is None, go to login screen
+            self.main_window.show_login_screen()
+            return
+            
         if self.user[6]:  # User is admin
             self.main_window.show_admin_menu(self.user)
         else:

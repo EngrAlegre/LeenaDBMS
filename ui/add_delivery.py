@@ -41,7 +41,7 @@ class AddDeliveryScreen(object):
         self.label = QtWidgets.QLabel()
         self.label.setStyleSheet("font: 36pt \"Century Gothic\"; color:rgb(76, 107, 140)")
         self.label.setObjectName("label")
-        self.label.setText("ADD DELIVERY")
+        self.label.setText("ADD DELIVER")
         self.label.setAlignment(QtCore.Qt.AlignCenter)
         
         self.title_layout.addWidget(self.label)

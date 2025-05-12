@@ -9,6 +9,8 @@ class UserMainMenu(object):
         
     def set_user(self, user):
         self.user = user
+        # Print user info for debugging
+        print(f"UserMenu - set_user called with user: {user}")
         
     def setupUi(self, Widget):
         Widget.setObjectName("Widget")
@@ -146,6 +148,10 @@ class UserMainMenu(object):
         self.main_window.show_welcome_screen()
         
     def open_edit_personal_info(self):
+        # Store the current user_id for fetching fresh data when returning
+        if self.user:
+            self.user_id = self.user[0]
+            print(f"Storing user_id {self.user_id} before edit screen")
         self.main_window.show_edit_personal_info(self.user)
         
     def open_view_delivery(self):

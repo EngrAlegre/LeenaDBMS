@@ -155,10 +155,24 @@ class DonationDriveApp(QtWidgets.QMainWindow):
         self.stacked_widget.setCurrentIndex(2)
         
     def show_admin_menu(self, user):
+        # Always fetch fresh user data from database
+        if user:
+            print(f"Refreshing admin user data for user_id: {user[0]}")
+            fresh_user = self.database.get_user_by_id(user[0])
+            if fresh_user:
+                user = fresh_user
+                print(f"Updated admin user data: {user}")
         self.admin_menu_screen.set_user(user)
         self.stacked_widget.setCurrentIndex(3)
         
     def show_user_menu(self, user):
+        # Always fetch fresh user data from database
+        if user:
+            print(f"Refreshing user data for user_id: {user[0]}")
+            fresh_user = self.database.get_user_by_id(user[0])
+            if fresh_user:
+                user = fresh_user
+                print(f"Updated user data: {user}")
         self.user_menu_screen.set_user(user)
         self.stacked_widget.setCurrentIndex(4)
         

@@ -1,4 +1,5 @@
 import sqlite3
+import re
 import os
 import random
 import string
@@ -11,6 +12,26 @@ class Database:
         self.connection = sqlite3.connect(self.DB_NAME)
         self.cursor = self.connection.cursor()
         self.create_tables()
+    
+    def connect_db(self):
+        """Create a new connection to the database"""
+        try:
+            conn = sqlite3.connect(self.DB_NAME)
+            return conn
+        except sqlite3.Error as e:
+            print(f"Error connecting to database: {e}")
+            return None
+    
+    def refresh_connection(self):
+        """Refresh the database connection"""
+        try:
+            if self.connection:
+                self.connection.close()
+            self.connection = sqlite3.connect(self.DB_NAME)
+            self.cursor = self.connection.cursor()
+            print("Database connection refreshed successfully")
+        except Exception as e:
+            print(f"Error refreshing connection: {e}")
     
     def close(self):
         """Close the database connection"""
@@ -172,28 +193,73 @@ class Database:
     def verify_login(self, username, password):
         """Verify login credentials and return user information"""
         try:
+            print(f"Attempting login with username: {username}")
+            # Refresh connection first
+            self.refresh_connection()
+            
             self.cursor.execute("SELECT * FROM accounts WHERE username = ? AND password = ?", 
                            (username, password))
             user = self.cursor.fetchone()
+            print(f"Login result: {user}")
             return user
         except Exception as e:
+            print(f"Login error: {str(e)}")
             return None
     
     def get_user_by_id(self, user_code):
         """Get user information by user code"""
-        self.cursor.execute("SELECT * FROM accounts WHERE user_code = ?", (user_code,))
-        return self.cursor.fetchone()
+        print(f"Database - get_user_by_id called for user_code: {user_code}")
+        try:
+            # Refresh connection to ensure we get the latest data
+            self.refresh_connection()
+            
+            # Query the user
+            self.cursor.execute("SELECT * FROM accounts WHERE user_code = ?", (user_code,))
+            result = self.cursor.fetchone()
+            print(f"Database - get_user_by_id result: {result}")
+            return result
+        except Exception as e:
+            print(f"Error in get_user_by_id: {str(e)}")
+            return None
     
     def update_user(self, user_code, username, firstname, lastname, password):
         """Update user account information"""
+        print(f"Database - update_user called for user_code: {user_code}")
+        print(f"Database - update details: username={username}, firstname={firstname}, lastname={lastname}")
         try:
+            # Refresh connection first
+            self.refresh_connection()
+            
+            # Check if user exists
+            self.cursor.execute("SELECT * FROM accounts WHERE user_code = ?", (user_code,))
+            user = self.cursor.fetchone()
+            if not user:
+                print(f"Error: User with code {user_code} not found")
+                return False, "User not found"
+            
+            # Update user information
             self.cursor.execute(
                 "UPDATE accounts SET username = ?, firstname = ?, lastname = ?, password = ?, cpassword = ? WHERE user_code = ?",
                 (username, firstname, lastname, password, password, user_code)
             )
-            self.commit()
+            # Make sure changes are committed
+            self.connection.commit()
+            
+            # Verify update was successful
+            rows_updated = self.cursor.rowcount
+            print(f"Database - update_user: {rows_updated} rows updated")
+            
+            if rows_updated == 0:
+                print("Warning: No rows were updated, but no error occurred")
+                
+            # Double-check the update
+            self.cursor.execute("SELECT * FROM accounts WHERE user_code = ?", (user_code,))
+            updated_user = self.cursor.fetchone()
+            print(f"Updated user: {updated_user}")
+            
             return True, None
         except Exception as e:
+            print(f"Database - update_user failed: {str(e)}")
             return False, str(e)
     
     # LOCATION OPERATIONS

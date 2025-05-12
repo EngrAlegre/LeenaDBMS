@@ -27,10 +27,10 @@ class EditProductsScreen(object):
         
         # Title
         self.label = QtWidgets.QLabel(self.widget)
-        self.label.setGeometry(QtCore.QRect(430, 30, 441, 81))
-        self.label.setStyleSheet("font: 30pt \"Century Gothic\"; color:rgb(76, 107, 140)")
+        self.label.setGeometry(QtCore.QRect(430, 20, 441, 61))
+        self.label.setStyleSheet("font: 36pt \"Century Gothic\"; color:rgb(76, 107, 140)")
         self.label.setObjectName("label")
-        self.label.setText("EDIT PRODUCTS")
+        self.label.setText("EDIT PRODUCT")
         
         # Subtitle
         self.label_2 = QtWidgets.QLabel(self.widget)
@@ -212,7 +212,7 @@ class EditProductsScreen(object):
             
             # Center the title labels
             center_x = int(parent_width / 2)
-            self.label.setGeometry(QtCore.QRect(int(center_x - 220), 30, 441, 81))
+            self.label.setGeometry(QtCore.QRect(int(center_x - 220), 20, 441, 61))
             self.label_2.setGeometry(QtCore.QRect(int(center_x - 225), 100, 451, 41))
             
             # Calculate table and edit section positions
