@@ -222,6 +222,22 @@ class Database:
             print(f"Error in get_user_by_id: {str(e)}")
             return None
     
+    def get_all_admin_accounts(self):
+        """Get all admin accounts"""
+        print("Database - get_all_admin_accounts called")
+        try:
+            # Refresh connection to ensure we get the latest data
+            self.refresh_connection()
+            
+            # Query admin accounts (typeofUser = 1)
+            self.cursor.execute("SELECT user_code, username, firstname, lastname FROM accounts WHERE typeofUser = 1 ORDER BY username")
+            results = self.cursor.fetchall()
+            print(f"Database - get_all_admin_accounts found {len(results)} admins")
+            return results
+        except Exception as e:
+            print(f"Error in get_all_admin_accounts: {str(e)}")
+            return []
+    
     def update_user(self, user_code, username, firstname, lastname, password):
         """Update user account information"""
         print(f"Database - update_user called for user_code: {user_code}")

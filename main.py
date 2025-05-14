@@ -17,6 +17,7 @@ from ui.delete_products import DeleteProductsScreen
 from ui.delete_delivery import DeleteDeliveryScreen
 from ui.edit_products import EditProductsScreen
 from ui.edit_delivery import EditDeliveryScreen
+from ui.view_admins import ViewAdminsScreen
 from ui.screen_helper import ScreenHelper
 
 class DonationDriveApp(QtWidgets.QMainWindow):
@@ -79,25 +80,31 @@ class DonationDriveApp(QtWidgets.QMainWindow):
         
     def init_additional_screens(self):
         """Initialize additional screens"""
-        # View Products Screen
+        # View Products Screen - index 5
         view_products_widget = QtWidgets.QWidget()
         self.view_products_screen = ViewProductsScreen(self)
         self.view_products_screen.setupUi(view_products_widget)
         self.stacked_widget.addWidget(view_products_widget)
         
-        # View Delivery Screen
+        # View Delivery Screen - index 6
         view_delivery_widget = QtWidgets.QWidget()
         self.view_delivery_screen = ViewDeliveryScreen(self)
         self.view_delivery_screen.setupUi(view_delivery_widget)
         self.stacked_widget.addWidget(view_delivery_widget)
         
-        # View Organization Screen
+        # View Organization Screen - index 7
         view_org_widget = QtWidgets.QWidget()
         self.view_org_screen = ViewOrganizationScreen(self)
         self.view_org_screen.setupUi(view_org_widget)
         self.stacked_widget.addWidget(view_org_widget)
         
-        # View Delivery User Screen
+        # View Admins Screen - index 8
+        view_admins_widget = QtWidgets.QWidget()
+        self.view_admins_screen = ViewAdminsScreen(self)
+        self.view_admins_screen.setupUi(view_admins_widget)
+        self.stacked_widget.addWidget(view_admins_widget)
+        
+        # View Delivery User Screen - index 9
         view_delivery_user_widget = QtWidgets.QWidget()
         self.view_delivery_user_screen = ViewDeliveryUserScreen(self)
         self.view_delivery_user_screen.setupUi(view_delivery_user_widget)
@@ -190,35 +197,39 @@ class DonationDriveApp(QtWidgets.QMainWindow):
         
     def show_view_delivery_user(self, user):
         self.view_delivery_user_screen.set_user(user)
-        self.stacked_widget.setCurrentIndex(8)
+        self.stacked_widget.setCurrentIndex(9)
         
     def show_edit_personal_info(self, user):
         self.edit_personal_screen.set_user(user)
-        self.stacked_widget.setCurrentIndex(9)
+        self.stacked_widget.setCurrentIndex(10)
         
     def show_add_products(self, user):
         self.add_products_screen.set_user(user)
-        self.stacked_widget.setCurrentIndex(10)
+        self.stacked_widget.setCurrentIndex(11)
         
     def show_add_delivery(self, user):
         self.add_delivery_screen.set_user(user)
-        self.stacked_widget.setCurrentIndex(11)
+        self.stacked_widget.setCurrentIndex(12)
         
     def show_delete_products(self, user):
         self.delete_products_screen.set_user(user)
-        self.stacked_widget.setCurrentIndex(12)
+        self.stacked_widget.setCurrentIndex(13)
         
     def show_delete_delivery(self, user):
         self.delete_delivery_screen.set_user(user)
-        self.stacked_widget.setCurrentIndex(13)
+        self.stacked_widget.setCurrentIndex(14)
         
     def show_edit_products(self, user):
         self.edit_products_screen.set_user(user)
-        self.stacked_widget.setCurrentIndex(14)
+        self.stacked_widget.setCurrentIndex(15)
         
     def show_edit_delivery(self, user):
         self.edit_delivery_screen.set_user(user)
-        self.stacked_widget.setCurrentIndex(15)
+        self.stacked_widget.setCurrentIndex(16)
+        
+    def show_view_admins(self, user):
+        self.view_admins_screen.set_user(user)
+        self.stacked_widget.setCurrentIndex(8)
 
     def resizeEvent(self, event):
         """Handle window resize events and resize all UI elements"""

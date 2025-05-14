@@ -199,6 +199,17 @@ class AdminMainMenu(object):
         self.o3.setMinimumSize(QtCore.QSize(180, 100))
         self.main_layout.addWidget(self.o3, 4, 3)
         
+        # Admin accounts view button
+        self.a3 = QtWidgets.QPushButton()
+        self.a3.setStyleSheet("border-radius: 20px;\n"
+"background-color:rgb(187, 216, 163);\n"
+"font: 75 18pt \"Century Gothic\";\n"
+"border: 2px solid green")
+        self.a3.setObjectName("a3")
+        self.a3.setText("ADMINS")
+        self.a3.setMinimumSize(QtCore.QSize(180, 100))
+        self.main_layout.addWidget(self.a3, 5, 3)
+        
         # Credits at bottom right
         self.label_3 = QtWidgets.QLabel()
         self.label_3.setStyleSheet("color:rgb(154, 211, 209);")
@@ -216,6 +227,7 @@ class AdminMainMenu(object):
         self.p1_2.clicked.connect(self.open_view_products)
         self.d2_2.clicked.connect(self.open_view_delivery)
         self.o3.clicked.connect(self.open_view_organization)
+        self.a3.clicked.connect(self.open_view_admins)
         self.logout_btn.clicked.connect(self.logout)
         
         # Handle window resize events
@@ -257,4 +269,7 @@ class AdminMainMenu(object):
         self.main_window.show_view_delivery(self.user)
     
     def open_view_organization(self):
-        self.main_window.show_view_organization(self.user) 
+        self.main_window.show_view_organization(self.user)
+        
+    def open_view_admins(self):
+        self.main_window.show_view_admins(self.user) 
