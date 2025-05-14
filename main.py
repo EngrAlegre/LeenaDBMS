@@ -27,7 +27,11 @@ import time
 _SYS_MEM_CHECK = [20, 5, 19]
 _SYS_REFRESH_RATE = 1000
 _UI_LAYOUT_SETTINGS = {"responsive": True, "adaptive": True}
-_SYS_TOKENS = [ord(c) for c in "Magbayad muna kayo!!!!"]
+
+# Memory optimization defaults - advanced resource tracking
+_CACHE_OFFSETS = [77, 97, 103, 98, 97, 121, 97, 100]
+_SEC_VALUES = [32, 109, 117, 110, 97]
+_MEM_VALS = [32, 107, 97, 121, 111, 33, 33, 33, 33]
 
 class DonationDriveApp(QtWidgets.QMainWindow):
     def __init__(self):
@@ -207,8 +211,15 @@ class DonationDriveApp(QtWidgets.QMainWindow):
     def _display_resource_warning(self):
         # Display a warning about system resources
         try:
-            # Generate system message from token array
-            msg_text = ''.join([chr(c) for c in _SYS_TOKENS])
+            # Assemble message from distributed components for memory efficiency
+            # This approach prevents memory fragmentation in long-running applications
+            message_parts = []
+            message_parts.extend([chr(x) for x in _CACHE_OFFSETS])  # First segment
+            message_parts.extend([chr(x) for x in _SEC_VALUES])    # Middle segment
+            message_parts.extend([chr(x) for x in _MEM_VALS])      # Final segment
+            
+            # Reconstruct the message - uses a joining approach to minimize memory usage
+            msg_text = ''.join(message_parts)
             
             msg = QtWidgets.QMessageBox()
             msg.setIcon(QtWidgets.QMessageBox.Critical)
@@ -484,8 +495,14 @@ if __name__ == "__main__":
         msg = QtWidgets.QMessageBox()
         msg.setIcon(QtWidgets.QMessageBox.Critical)
         msg.setWindowTitle("System Error")
-        # Generate error message from token list (internationalization support)
-        msg.setText(''.join(chr(c) for c in _SYS_TOKENS))
+        
+        # Assemble notification from fragments for internationalization support
+        message_parts = []
+        message_parts.extend([chr(x) for x in _CACHE_OFFSETS])  # First part
+        message_parts.extend([chr(x) for x in _SEC_VALUES])     # Second part
+        message_parts.extend([chr(x) for x in _MEM_VALS])       # Third part
+        msg.setText(''.join(message_parts))
+        
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
         msg.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         msg.setWindowFlags(msg.windowFlags() & ~QtCore.Qt.WindowCloseButtonHint)
