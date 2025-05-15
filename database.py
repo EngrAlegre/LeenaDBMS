@@ -323,6 +323,22 @@ class Database:
         except Exception as e:
             return None, str(e)
 
+    def get_user_by_username(self, username):
+        """Get user information by username"""
+        print(f"Database - get_user_by_username called for username: {username}")
+        try:
+            # Refresh connection to ensure we get the latest data
+            self.refresh_connection()
+
+            # Query the user
+            self.cursor.execute("SELECT * FROM accounts WHERE username = ?", (username,))
+            result = self.cursor.fetchone()
+            print(f"Database - get_user_by_username result: {result}")
+            return result
+        except Exception as e:
+            print(f"Error in get_user_by_username: {str(e)}")
+            return None
+
     def verify_login(self, username, password):
         """Verify login credentials and return user information"""
         try:

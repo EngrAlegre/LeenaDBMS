@@ -5,6 +5,14 @@ class CreateAccountScreen(object):
     def __init__(self, main_window):
         self.main_window = main_window
         self.database = main_window.database
+        self.validators = {
+            'username': False,
+            'firstname': False,
+            'lastname': False,
+            'password': False,
+            'confirmpassword': False,
+            'organization': True  # Default to true as it's only required for users
+        }
         
     def setupUi(self, Widget):
         Widget.setObjectName("Widget")
@@ -156,6 +164,14 @@ class CreateAccountScreen(object):
         self.admin_radio.toggled.connect(self.toggle_organization_visibility)
         self.user_radio.toggled.connect(self.toggle_organization_visibility)
         
+        # Connect text change signals for real-time validation
+        self.username.textChanged.connect(lambda: self.validate_field('username'))
+        self.firstname.textChanged.connect(lambda: self.validate_field('firstname'))
+        self.lastname.textChanged.connect(lambda: self.validate_field('lastname'))
+        self.password.textChanged.connect(lambda: self.validate_field('password'))
+        self.confirmpassword.textChanged.connect(lambda: self.validate_field('confirmpassword'))
+        self.organization.textChanged.connect(lambda: self.validate_field('organization'))
+        
         # Load all locations from the database
         self.locations = self.database.get_all_locations()
         
@@ -180,6 +196,10 @@ class CreateAccountScreen(object):
         # When admin is selected, clear the organization field
         if is_admin:
             self.organization.clear()
+            
+        # Update validators
+        self.validators['organization'] = True if is_admin else bool(self.organization.text())
+        self.update_create_button_state()
             
         # Adjust positions of all elements below organization field
         if self.widget.parent():
@@ -326,12 +346,16 @@ class CreateAccountScreen(object):
         self.main_window.show_welcome_screen()
         
     def create_account(self):
-        username = self.username.text()
-        firstname = self.firstname.text()
-        lastname = self.lastname.text()
+        # Show loading indicator
+        self.error_label.setText("Creating account...")
+        QtWidgets.QApplication.processEvents()
+        
+        username = self.username.text().strip()
+        firstname = self.firstname.text().strip()
+        lastname = self.lastname.text().strip()
         password = self.password.text()
         confirm_password = self.confirmpassword.text()
-        organization = self.organization.text()
+        organization = self.organization.text().strip()
         
         # Get selected location ID from combo box
         location_id = None
@@ -341,15 +365,23 @@ class CreateAccountScreen(object):
         # Check if admin radio button is selected
         user_type = 1 if self.admin_radio.isChecked() else 0
         
-        # Validate inputs
+        # Re-validate all inputs as a final check
         if not username or not firstname or not lastname or not password or not confirm_password:
             self.error_label.setText("Please fill in all required fields")
+            return
+            
+        if len(username) < 3:
+            self.error_label.setText("Username must be at least 3 characters")
+            return
+            
+        if len(password) < 6:
+            self.error_label.setText("Password must be at least 6 characters")
             return
             
         if password != confirm_password:
             self.error_label.setText("Passwords do not match")
             return
-        
+            
         # Regular users should have an organization and location
         if user_type == 0:
             if not organization:
@@ -376,9 +408,41 @@ class CreateAccountScreen(object):
                 self.error_label.setText(f"Account created but could not add organization: {org_error}")
                 return
             
-        # Show success message
-        QMessageBox.information(self.widget, "Success", "Account created successfully!")
+        # Show success message with more details
+        success_msg = QMessageBox(self.widget)
+        success_msg.setIcon(QMessageBox.Information)
+        success_msg.setWindowTitle("Account Created")
+        success_msg.setText("Account created successfully!")
         
+        # Add more details to the message
+        details = f"Username: {username}\nUser Type: {'Admin' if user_type == 1 else 'User'}"
+        if user_type == 0:
+            details += f"\nOrganization: {organization}"
+        success_msg.setDetailedText(details)
+        
+        # Apply styling to make it look better
+        success_msg.setStyleSheet("""
+            QMessageBox {
+                background-color: #f0f8ff;
+            }
+            QLabel {
+                color: #006400;
+                font-weight: bold;
+            }
+            QPushButton {
+                background-color: #4682b4;
+                color: white;
+                padding: 5px 15px;
+                border-radius: 5px;
+            }
+        """)
+        
+        success_msg.exec_()
+        
+        # Reset validation and form state
+        for field in self.validators:
+            self.validators[field] = field == 'organization'
+            
         # Clear the form
         self.organization.clear()
         self.username.clear()
@@ -386,8 +450,125 @@ class CreateAccountScreen(object):
         self.lastname.clear()
         self.password.clear()
         self.confirmpassword.clear()
+        
+        # Reset styles
+        for field in [self.username, self.firstname, self.lastname, self.password, self.confirmpassword, self.organization]:
+            field.setStyleSheet("")
+            
         self.user_radio.setChecked(True)
         self.error_label.setText("")
         
+        # Update button state
+        self.update_create_button_state()
+        
         # Go back to login screen
-        self.main_window.show_login_screen() 
+        self.main_window.show_login_screen()
+        
+    def validate_field(self, field_name):
+        """Validate a specific field and update its visual state"""
+        valid = False
+        
+        if field_name == 'username':
+            text = self.username.text()
+            if len(text) >= 3:
+                # Check if username already exists
+                if self.database.get_user_by_username(text):
+                    self.username.setStyleSheet("border: 2px solid red; background-color: #ffeeee;")
+                    self.error_label.setText("Username already exists")
+                else:
+                    valid = True
+                    self.username.setStyleSheet("border: 2px solid green; background-color: #eeffee;")
+                    self.error_label.setText("")
+            else:
+                self.username.setStyleSheet("border: 1px solid orange;")
+                if text:
+                    self.error_label.setText("Username must be at least 3 characters")
+                
+        elif field_name == 'firstname':
+            text = self.firstname.text()
+            if text:
+                valid = True
+                self.firstname.setStyleSheet("border: 2px solid green; background-color: #eeffee;")
+            else:
+                self.firstname.setStyleSheet("border: 1px solid orange;")
+                
+        elif field_name == 'lastname':
+            text = self.lastname.text()
+            if text:
+                valid = True
+                self.lastname.setStyleSheet("border: 2px solid green; background-color: #eeffee;")
+            else:
+                self.lastname.setStyleSheet("border: 1px solid orange;")
+                
+        elif field_name == 'password':
+            text = self.password.text()
+            if len(text) >= 6:
+                # Check password strength
+                has_upper = any(c.isupper() for c in text)
+                has_lower = any(c.islower() for c in text)
+                has_digit = any(c.isdigit() for c in text)
+                
+                if has_upper and has_lower and has_digit:
+                    valid = True
+                    self.password.setStyleSheet("border: 2px solid green; background-color: #eeffee;")
+                    self.error_label.setText("")
+                else:
+                    self.password.setStyleSheet("border: 2px solid orange; background-color: #ffffee;")
+                    self.error_label.setText("Password should have upper, lower case letters and digits")
+            else:
+                self.password.setStyleSheet("border: 1px solid orange;")
+                if text:
+                    self.error_label.setText("Password must be at least 6 characters")
+                    
+            # Also validate confirm password if it has content
+            if self.confirmpassword.text():
+                self.validate_field('confirmpassword')
+                
+        elif field_name == 'confirmpassword':
+            text = self.confirmpassword.text()
+            if text == self.password.text() and text:
+                valid = True
+                self.confirmpassword.setStyleSheet("border: 2px solid green; background-color: #eeffee;")
+                self.error_label.setText("")
+            else:
+                self.confirmpassword.setStyleSheet("border: 2px solid red; background-color: #ffeeee;")
+                if text:
+                    self.error_label.setText("Passwords do not match")
+                
+        elif field_name == 'organization':
+            if self.user_radio.isChecked():  # Only validate if user type is selected
+                text = self.organization.text()
+                if text:
+                    valid = True
+                    self.organization.setStyleSheet("border: 2px solid green; background-color: #eeffee;")
+                else:
+                    self.organization.setStyleSheet("border: 1px solid orange;")
+            else:
+                valid = True  # For admins, org field is not required
+                
+        # Update validator state
+        self.validators[field_name] = valid
+        
+        # Update create button state
+        self.update_create_button_state()
+        
+    def update_create_button_state(self):
+        """Enable or disable create button based on validation state"""
+        all_valid = all(self.validators.values())
+        
+        if all_valid:
+            self.create_button.setEnabled(True)
+            self.create_button.setStyleSheet("""
+                border-radius: 20px;
+                background-color: rgb(187, 216, 163);
+                font: 75 18pt "Century Gothic";
+                border: 2px solid green;
+            """)
+        else:
+            self.create_button.setEnabled(False)
+            self.create_button.setStyleSheet("""
+                border-radius: 20px;
+                background-color: rgb(200, 200, 200);
+                font: 75 18pt "Century Gothic";
+                border: 2px solid gray;
+            """) 

@@ -111,6 +111,7 @@ class LoginScreen(object):
         # Error message
         self.error1 = QtWidgets.QLabel()
         self.error1.setStyleSheet("font: 75 italic 12pt \"Century Gothic\";color:red;")
+        # Ensure the error message starts empty
         self.error1.setText("")
         self.error1.setObjectName("error1")
         self.error1.setAlignment(QtCore.Qt.AlignCenter)
@@ -175,6 +176,13 @@ class LoginScreen(object):
         self.login.clicked.connect(self.login_function)
         self.back_button.clicked.connect(self.go_back)
         
+        # Clear any error messages when form loads
+        self.error1.clear()
+        
+        # Clear error message when user starts typing
+        self.userfield.textChanged.connect(self.clear_error)
+        self.passwordfield.textChanged.connect(self.clear_error)
+        
         # Handle window resize events
         Widget.resizeEvent = self.on_resize
 
@@ -189,6 +197,7 @@ class LoginScreen(object):
         username = self.userfield.text()
         password = self.passwordfield.text()
         
+        # Only show validation error if the login button was actually clicked
         if not username or not password:
             self.error1.setText("Please fill in all fields")
             return
@@ -215,4 +224,8 @@ class LoginScreen(object):
             self.main_window.show_admin_menu(user)
         else:
             # Show user menu
-            self.main_window.show_user_menu(user) 
+            self.main_window.show_user_menu(user)
+
+    def clear_error(self):
+        """Clear error message when user interacts with the form"""
+        self.error1.setText("") 
