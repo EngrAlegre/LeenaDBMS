@@ -112,6 +112,19 @@ class EditPersonalInfoScreen(object):
         self.organization_field.setObjectName("organization_field")
         self.form_layout.addWidget(self.organization_field)
         
+        # Location field
+        self.label_9 = QtWidgets.QLabel()
+        self.label_9.setStyleSheet("font: 12pt \"Century Gothic\";")
+        self.label_9.setObjectName("label_9")
+        self.label_9.setText("LOCATION")
+        self.form_layout.addWidget(self.label_9)
+        
+        self.location_combo = QtWidgets.QComboBox()
+        self.location_combo.setMinimumSize(QtCore.QSize(400, 41))
+        self.location_combo.setMaximumSize(QtCore.QSize(500, 41))
+        self.location_combo.setObjectName("location_combo")
+        self.form_layout.addWidget(self.location_combo)
+        
         # Username field
         self.label_3 = QtWidgets.QLabel()
         self.label_3.setStyleSheet("font: 12pt \"Century Gothic\";")
@@ -189,10 +202,18 @@ class EditPersonalInfoScreen(object):
         self.update_button = QtWidgets.QPushButton()
         self.update_button.setMinimumSize(QtCore.QSize(391, 61))
         self.update_button.setMaximumSize(QtCore.QSize(500, 61))
-        self.update_button.setStyleSheet("border-radius: 20px;\n"
-"background-color:rgb(187, 216, 163);\n"
-"font: 75 18pt \"Century Gothic\";\n"
-"border: 2px solid green")
+        self.update_button.setStyleSheet("""
+            QPushButton {
+                border-radius: 20px;
+                background-color: #BBD8A3;
+                color: black;
+                font: 75 18pt "Century Gothic";
+                border: 2px solid green;
+            }
+            QPushButton:hover {
+                background-color: #A6C18F;
+            }
+        """)
         self.update_button.setObjectName("update_button")
         self.update_button.setText("UPDATE INFORMATION")
         self.update_button_layout.addWidget(self.update_button)
@@ -223,10 +244,17 @@ class EditPersonalInfoScreen(object):
         self.back_button = QtWidgets.QPushButton()
         self.back_button.setMinimumSize(QtCore.QSize(161, 41))
         self.back_button.setMaximumSize(QtCore.QSize(161, 41))
-        self.back_button.setStyleSheet("border-radius: 10px;\n"
-"background-color:rgb(255, 225, 189);\n"
-"font: 75 12pt \"Century Gothic\";\n"
-"border: 2px solid orange")
+        self.back_button.setStyleSheet("""
+            QPushButton {
+                border-radius: 10px;
+                background-color: rgb(255, 225, 189);
+                font: 75 12pt "Century Gothic";
+                border: 2px solid orange;
+            }
+            QPushButton:hover {
+                background-color: rgb(240, 200, 150);
+            }
+        """)
         self.back_button.setObjectName("back_button")
         self.back_button.setText("BACK")
         self.back_layout.addWidget(self.back_button)
@@ -253,9 +281,32 @@ class EditPersonalInfoScreen(object):
         if self.user[6]:  # User is admin
             self.label_8.setVisible(False)
             self.organization_field.setVisible(False)
+            self.label_9.setVisible(False)
+            self.location_combo.setVisible(False)
         else:
             self.label_8.setVisible(True)
             self.organization_field.setVisible(True)
+            self.label_9.setVisible(True)
+            self.location_combo.setVisible(True)
+            
+            # Load locations into combo box
+            self.location_combo.clear()
+            locations = self.database.get_all_locations()
+            current_location_id = "QC"  # Default location
+            
+            if self.organization and len(self.organization) > 2:
+                current_location_id = self.organization[2]
+                
+            # Populate locations dropdown
+            selected_index = 0
+            for i, location in enumerate(locations):
+                self.location_combo.addItem(location[1], location[0])
+                if location[0] == current_location_id:
+                    selected_index = i
+            
+            # Set the selected location
+            self.location_combo.setCurrentIndex(selected_index)
+            
             # Load organization name if available
             if self.organization:
                 print(f"Setting organization field to: {self.organization[1]}")
@@ -312,12 +363,12 @@ class EditPersonalInfoScreen(object):
                 print(f"Organization name: {org_name}")
                 print(f"Current organization in DB: {self.organization}")
                 
-                # Default location if needed
-                location_id = None
-                if self.organization and len(self.organization) > 2:
-                    location_id = self.organization[2]
-                else:
-                    # Get default location (Manila)
+                # Get selected location ID
+                location_id = self.location_combo.currentData()
+                print(f"Selected location ID: {location_id}")
+                
+                if not location_id:
+                    # Fallback to default if no location selected
                     location_id = "QC"
                 
                 try:

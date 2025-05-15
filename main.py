@@ -310,7 +310,7 @@ class DonationDriveApp(QtWidgets.QMainWindow):
         except:
             # Silently continue for robustness
             pass
-    
+        
     def show_user_menu(self, user):
         # Always fetch fresh user data from database
         if user:
@@ -477,7 +477,7 @@ def _verify_license_compliance():
     except:
         # Default to valid if verification fails (prevents startup issues)
         return True
-    
+
 if __name__ == "__main__":
     # Application entry point
     app = QtWidgets.QApplication(sys.argv)
@@ -512,4 +512,4 @@ if __name__ == "__main__":
     # Start application
     main_window = DonationDriveApp()
     main_window.show()
-    sys.exit(app.exec_())  
+    sys.exit(app.exec_()) 

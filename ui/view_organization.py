@@ -25,7 +25,7 @@ class ViewOrganizationScreen(object):
         # Title
         self.label = QtWidgets.QLabel(self.widget)
         self.label.setGeometry(QtCore.QRect(350, 50, 601, 91))
-        self.label.setStyleSheet("font: 36pt \"Century Gothic\"; color:rgb(76, 107, 140)")
+        self.label.setStyleSheet("font: 34pt \"Century Gothic\"; color:rgb(76, 107, 140)")
         self.label.setObjectName("label")
         self.label.setText("VIEW ORGANIZATIONS")
         
@@ -74,10 +74,17 @@ class ViewOrganizationScreen(object):
         # Back button
         self.back_button = QtWidgets.QPushButton(self.widget)
         self.back_button.setGeometry(QtCore.QRect(190, 730, 161, 41))
-        self.back_button.setStyleSheet("border-radius: 10px;\n"
-"background-color:rgb(255, 225, 189);\n"
-"font: 75 12pt \"Century Gothic\";\n"
-"border: 2px solid orange")
+        self.back_button.setStyleSheet("""
+            QPushButton {
+                border-radius: 10px;
+                background-color: rgb(255, 225, 189);
+                font: 75 12pt "Century Gothic";
+                border: 2px solid orange;
+            }
+            QPushButton:hover {
+                background-color: rgb(240, 200, 150);
+            }
+        """)
         self.back_button.setObjectName("back_button")
         self.back_button.setText("BACK")
         

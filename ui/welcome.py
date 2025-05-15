@@ -69,10 +69,17 @@ class WelcomeScreen(object):
         self.login_button = QtWidgets.QPushButton()
         self.login_button.setMinimumSize(QtCore.QSize(391, 61))
         self.login_button.setMaximumSize(QtCore.QSize(500, 61))
-        self.login_button.setStyleSheet("border-radius: 20px;\n"
-"background-color:rgb(255, 225, 189);\n"
-"font: 75 18pt \"Century Gothic\";\n"
-"border: 2px solid orange")
+        self.login_button.setStyleSheet("""
+            QPushButton {
+                border-radius: 25px;
+                background-color:rgb(255, 225, 189);
+                font: 75 14pt "Century Gothic";
+                border: 2px solid orange;
+            }
+            QPushButton:hover {
+                background-color: rgb(240, 200, 150);
+            }
+        """)
         self.login_button.setObjectName("login_button")
         self.login_button.setText("LOGIN")
         
@@ -90,10 +97,18 @@ class WelcomeScreen(object):
         self.signup_button = QtWidgets.QPushButton()
         self.signup_button.setMinimumSize(QtCore.QSize(391, 61))
         self.signup_button.setMaximumSize(QtCore.QSize(500, 61))
-        self.signup_button.setStyleSheet("border-radius: 20px;\n"
-"background-color:rgb(187, 216, 163);\n"
-"font: 75 18pt \"Century Gothic\";\n"
-"border: 2px solid green")
+        self.signup_button.setStyleSheet("""
+            QPushButton {
+                border-radius: 25px;
+                background-color: #BBD8A3;
+                color: black;
+                font: 75 14pt "Century Gothic";
+                border: 2px solid green;
+            }
+            QPushButton:hover {
+                background-color: #A6C18F;
+            }
+        """)
         self.signup_button.setObjectName("signup_button")
         self.signup_button.setText("SIGN UP")
         

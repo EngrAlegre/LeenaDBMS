@@ -81,20 +81,34 @@ class AddProductsScreen(object):
         # Back button - move down slightly to account for status label above
         self.back_button = QtWidgets.QPushButton(self.widget)
         self.back_button.setGeometry(QtCore.QRect(390, 680, 161, 61))  # Moved down by 30 pixels
-        self.back_button.setStyleSheet("border-radius: 20px;\n"
-"background-color:rgb(255, 225, 189);\n"
-"font: 75 18pt \"Century Gothic\";\n"
-"border: 2px solid orange")
+        self.back_button.setStyleSheet("""
+            QPushButton {
+                border-radius: 20px;
+                background-color: rgb(255, 225, 189);
+                font: 75 18pt "Century Gothic";
+                border: 2px solid orange;
+            }
+            QPushButton:hover {
+                background-color: rgb(240, 200, 150);
+            }
+        """)
         self.back_button.setObjectName("back_button")
         self.back_button.setText("BACK")
         
         # Save All button - move down slightly to match back button
         self.save_button = QtWidgets.QPushButton(self.widget)
         self.save_button.setGeometry(QtCore.QRect(590, 680, 350, 61))  # Moved down by 30 pixels
-        self.save_button.setStyleSheet("border-radius: 20px;\n"
-"background-color:rgb(187, 216, 163);\n"
-"font: 75 18pt \"Century Gothic\";\n"
-"border: 2px solid green")
+        self.save_button.setStyleSheet("""
+            QPushButton {
+                border-radius: 20px;
+                background-color: #BBD8A3;
+                font: 75 18pt "Century Gothic";
+                border: 2px solid green;
+            }
+            QPushButton:hover {
+                background-color: #A6C18F;
+            }
+        """)
         self.save_button.setObjectName("save_button")
         self.save_button.setText("SAVE ALL PRODUCTS")
         

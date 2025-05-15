@@ -123,10 +123,17 @@ class LoginScreen(object):
         self.login = QtWidgets.QPushButton()
         self.login.setMinimumSize(QtCore.QSize(391, 61))
         self.login.setMaximumSize(QtCore.QSize(600, 61))
-        self.login.setStyleSheet("border-radius: 20px;\n"
-"background-color:rgb(255, 225, 189);\n"
-"font: 75 18pt \"Century Gothic\";\n"
-"border: 2px solid orange")
+        self.login.setStyleSheet("""
+            QPushButton {
+                border-radius: 25px;
+                background-color:rgb(255, 225, 189);
+                font: 75 14pt "Century Gothic";
+                border: 2px solid orange;
+            }
+            QPushButton:hover {
+                background-color: rgb(240, 200, 150);
+            }
+        """)
         self.login.setObjectName("login")
         self.login.setText("LOG IN")
         self.form_layout.addWidget(self.login)
@@ -138,10 +145,18 @@ class LoginScreen(object):
         self.back_button = QtWidgets.QPushButton()
         self.back_button.setMinimumSize(QtCore.QSize(391, 61))
         self.back_button.setMaximumSize(QtCore.QSize(600, 61))
-        self.back_button.setStyleSheet("border-radius: 20px;\n"
-"background-color:rgb(187, 216, 163);\n"
-"font: 75 18pt \"Century Gothic\";\n"
-"border: 2px solid green")
+        self.back_button.setStyleSheet("""
+            QPushButton {
+                border-radius: 25px;
+                background-color: #BBD8A3;
+                color: black;
+                font: 75 14pt "Century Gothic";
+                border: 2px solid green;
+            }
+            QPushButton:hover {
+                background-color: #A6C18F;
+            }
+        """)
         self.back_button.setObjectName("back_button")
         self.back_button.setText("BACK")
         self.form_layout.addWidget(self.back_button)

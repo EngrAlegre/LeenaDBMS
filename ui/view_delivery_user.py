@@ -126,10 +126,17 @@ class ViewDeliveryUserScreen(object):
         self.back_button = QtWidgets.QPushButton()
         self.back_button.setMinimumSize(QtCore.QSize(161, 41))
         self.back_button.setMaximumSize(QtCore.QSize(161, 41))
-        self.back_button.setStyleSheet("border-radius: 10px;\n"
-"background-color:rgb(255, 225, 189);\n"
-"font: 75 12pt \"Century Gothic\";\n"
-"border: 2px solid orange")
+        self.back_button.setStyleSheet("""
+            QPushButton {
+                border-radius: 10px;
+                background-color: rgb(255, 225, 189);
+                font: 75 12pt "Century Gothic";
+                border: 2px solid orange;
+            }
+            QPushButton:hover {
+                background-color: rgb(255, 235, 210);
+            }
+        """)
         self.back_button.setObjectName("back_button")
         self.back_button.setText("BACK")
         self.bottom_layout.addWidget(self.back_button)

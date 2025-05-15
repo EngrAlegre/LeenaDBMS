@@ -28,6 +28,7 @@ class EditDeliveryScreen(object):
         # Title
         self.label = QtWidgets.QLabel(self.widget)
         self.label.setGeometry(QtCore.QRect(430, 20, 441, 61))
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
         self.label.setStyleSheet("font: 36pt \"Century Gothic\"; color:rgb(76, 107, 140)")
         self.label.setObjectName("label")
         self.label.setText("EDIT DELIVERY")
@@ -35,6 +36,7 @@ class EditDeliveryScreen(object):
         # Subtitle
         self.label_2 = QtWidgets.QLabel(self.widget)
         self.label_2.setGeometry(QtCore.QRect(430, 80, 451, 31))
+        self.label_2.setAlignment(QtCore.Qt.AlignCenter)
         self.label_2.setStyleSheet("font: 16pt \"Century Gothic\";color:\n"
 "rgb(71, 84, 111)")
         self.label_2.setObjectName("label_2")
@@ -165,20 +167,35 @@ class EditDeliveryScreen(object):
         # Update button
         self.update_button = QtWidgets.QPushButton(self.edit_section)
         self.update_button.setGeometry(QtCore.QRect(480, 250, 191, 61))
-        self.update_button.setStyleSheet("border-radius: 20px;\n"
-"background-color:rgb(187, 216, 163);\n"
-"font: 75 18pt \"Century Gothic\";\n"
-"border: 2px solid green")
+        self.update_button.setStyleSheet("""
+            QPushButton {
+                border-radius: 20px;
+                background-color: #BBD8A3;
+                color: black;
+                font: 75 18pt "Century Gothic";
+                border: 2px solid green;
+            }
+            QPushButton:hover {
+                background-color: #A6C18F;
+            }
+        """)
         self.update_button.setObjectName("update_button")
         self.update_button.setText("UPDATE")
         
         # Back button
         self.back_button = QtWidgets.QPushButton(self.widget)
         self.back_button.setGeometry(QtCore.QRect(190, 780, 161, 31))
-        self.back_button.setStyleSheet("border-radius: 10px;\n"
-"background-color:rgb(255, 225, 189);\n"
-"font: 75 12pt \"Century Gothic\";\n"
-"border: 2px solid orange")
+        self.back_button.setStyleSheet("""
+            QPushButton {
+                border-radius: 10px;
+                background-color: rgb(255, 225, 189);
+                font: 75 12pt "Century Gothic";
+                border: 2px solid orange;
+            }
+            QPushButton:hover {
+                background-color: rgb(240, 200, 150);
+            }
+        """)
         self.back_button.setObjectName("back_button")
         self.back_button.setText("BACK")
         

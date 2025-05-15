@@ -94,11 +94,18 @@ class ViewProductsScreen(object):
         self.ok_button = QtWidgets.QPushButton()
         self.ok_button.setMinimumSize(QtCore.QSize(161, 61))
         self.ok_button.setMaximumSize(QtCore.QSize(161, 61))
-        self.ok_button.setStyleSheet("border-radius: 20px;\n"
-"background-color:#00c400;\n"
-"font: 75 16pt \"Century Gothic\";\n"
-"color: white;\n"
-"border: none;")
+        self.ok_button.setStyleSheet("""
+            QPushButton { 
+                border-radius: 20px;   
+                background-color: #BBD8A3;
+                font: 75 16pt "Century Gothic";
+                color: black;
+                border: 2px solid green;
+            }
+            QPushButton:hover {
+                background-color: #A6C18F;
+            }
+        """)
         self.ok_button.setObjectName("ok_button")
         self.ok_button.setText("OK")
         

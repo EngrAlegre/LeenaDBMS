@@ -81,7 +81,7 @@ class ViewDeliveryScreen(object):
         self.filter_combo.setMinimumWidth(150)
         self.filter_combo.setMaximumWidth(250)
         self.filter_combo.setMinimumHeight(35)
-        self.filter_combo.setStyleSheet(COMBOBOX_STYLE)
+        self.filter_combo.setStyleSheet("font: 12pt \"Century Gothic\";")
         self.filter_combo.setObjectName("filter_combo")
         self.filter_combo.addItem("All")
         self.filter_combo.addItem("Upcoming")
@@ -137,7 +137,17 @@ class ViewDeliveryScreen(object):
         self.back_button = QtWidgets.QPushButton()
         self.back_button.setMinimumSize(QtCore.QSize(161, 41))
         self.back_button.setMaximumSize(QtCore.QSize(161, 41))
-        self.back_button.setStyleSheet(SECONDARY_BUTTON_STYLE)
+        self.back_button.setStyleSheet("""
+            QPushButton {
+                border-radius: 10px;
+                background-color: rgb(255, 225, 189);
+                font: 75 12pt "Century Gothic";
+                border: 2px solid orange;
+            }
+            QPushButton:hover {
+                background-color: rgb(240, 200, 150);
+            }
+        """)
         self.back_button.setObjectName("back_button")
         self.back_button.setText("BACK")
         self.back_button_layout.addWidget(self.back_button)

@@ -67,28 +67,32 @@ class DeleteProductsScreen(object):
         
         # Food List selection
         self.food_list_layout = QHBoxLayout()
-        self.food_list_layout.setContentsMargins(0, 10, 0, 10)
+        self.food_list_layout.setContentsMargins(20, 10, 0, 10)
         self.food_list_layout.setSpacing(10)
         
         # Food List Label
         self.list_label = QtWidgets.QLabel()
-        self.list_label.setStyleSheet("font: 14pt \"Century Gothic\";")
+        self.list_label.setStyleSheet("font: 13pt \"Century Gothic\";")
         self.list_label.setObjectName("list_label")
         self.list_label.setText("SELECT FOOD LIST:")
-        self.list_label.setMinimumWidth(170)
-        self.list_label.setMaximumWidth(170)
+        self.list_label.setMinimumWidth(200)
+        self.list_label.setMaximumWidth(200)
         self.food_list_layout.addWidget(self.list_label)
-        
+
+        # Add some space between label and combo box
+        self.food_list_layout.addItem(QSpacerItem(15, 0, QSizePolicy.Fixed, QSizePolicy.Minimum))
+
         # Food List Dropdown
         self.food_list_combo = QtWidgets.QComboBox()
         self.food_list_combo.setMinimumHeight(35)
+        self.food_list_combo.setGeometry(QtCore.QRect(400, 150, 611, 35))  # Adjust coordinates and size as needed
         self.food_list_combo.setStyleSheet("""
             QComboBox { 
                 font: 12pt "Century Gothic"; 
                 padding: 5px; 
                 border: 1px solid #76a5af;
                 border-radius: 4px;
-                background-color: white;
+                min-width: 150px;
             }
             QComboBox::drop-down {
                 subcontrol-origin: padding;
@@ -100,19 +104,10 @@ class DeleteProductsScreen(object):
                 border-top-right-radius: 4px;
                 border-bottom-right-radius: 4px;
             }
-            QComboBox::down-arrow {
-                width: 14px;
-                height: 14px;
-                background: transparent;
-                border-top: 5px solid #76a5af;
-                border-right: 5px solid transparent;
-                border-left: 5px solid transparent;
-                margin-right: 5px;
-            }
         """)
         self.food_list_combo.setObjectName("food_list_combo")
         self.food_list_layout.addWidget(self.food_list_combo, 1)
-        
+
         # Add some space after the dropdown
         self.food_list_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Fixed, QSizePolicy.Minimum))
         
@@ -257,13 +252,13 @@ class DeleteProductsScreen(object):
         self.back_button.setMaximumSize(QtCore.QSize(161, 41))
         self.back_button.setStyleSheet("""
             QPushButton {
-                border-radius: 20px;
+                border-radius: 10px;
                 background-color: rgb(255, 225, 189);
-                font: 75 16pt "Century Gothic";
-                border: none;
+                font: 75 12pt "Century Gothic";
+                border: 2px solid orange;
             }
             QPushButton:hover {
-                background-color: rgb(255, 235, 210);
+                background-color: rgb(240, 200, 150);
             }
         """)
         self.back_button.setObjectName("back_button")
@@ -282,11 +277,11 @@ class DeleteProductsScreen(object):
                 border-radius: 20px;
                 background-color: rgb(255, 100, 100);
                 font: 75 18pt "Century Gothic";
-                border: none;
-                color: white;
+                border: 2px solid red;
+                color: black;
             }
             QPushButton:hover {
-                background-color: rgb(255, 120, 120);
+                background-color: rgb(230, 80, 80);
             }
         """)
         self.delete_button.setObjectName("delete_button")

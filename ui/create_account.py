@@ -58,61 +58,71 @@ class CreateAccountScreen(object):
         self.organization.setGeometry(QtCore.QRect(430, 330, 421, 41))
         self.organization.setObjectName("organization")
         
+        # Location field
+        self.label_10 = QtWidgets.QLabel(self.widget)
+        self.label_10.setGeometry(QtCore.QRect(430, 380, 151, 16))
+        self.label_10.setStyleSheet("font: 12pt \"Century Gothic\";")
+        self.label_10.setObjectName("label_10")
+        
+        self.location_combo = QtWidgets.QComboBox(self.widget)
+        self.location_combo.setGeometry(QtCore.QRect(430, 400, 421, 41))
+        self.location_combo.setObjectName("location_combo")
+        
         # Username field
         self.label_3 = QtWidgets.QLabel(self.widget)
-        self.label_3.setGeometry(QtCore.QRect(430, 380, 121, 16))
+        self.label_3.setGeometry(QtCore.QRect(430, 450, 121, 16))
         self.label_3.setStyleSheet("font: 12pt \"Century Gothic\";")
         self.label_3.setObjectName("label_3")
         
         self.username = QtWidgets.QLineEdit(self.widget)
-        self.username.setGeometry(QtCore.QRect(430, 400, 421, 41))
+        self.username.setGeometry(QtCore.QRect(430, 470, 421, 41))
         self.username.setObjectName("username")
         
         # First Name field
         self.label_4 = QtWidgets.QLabel(self.widget)
-        self.label_4.setGeometry(QtCore.QRect(430, 450, 151, 16))
+        self.label_4.setGeometry(QtCore.QRect(430, 520, 151, 16))
         self.label_4.setStyleSheet("font: 12pt \"Century Gothic\";")
         self.label_4.setObjectName("label_4")
         
         self.firstname = QtWidgets.QLineEdit(self.widget)
-        self.firstname.setGeometry(QtCore.QRect(430, 470, 421, 41))
+        self.firstname.setGeometry(QtCore.QRect(430, 540, 421, 41))
         self.firstname.setObjectName("firstname")
         
         # Last Name field
         self.label_5 = QtWidgets.QLabel(self.widget)
-        self.label_5.setGeometry(QtCore.QRect(430, 520, 151, 16))
+        self.label_5.setGeometry(QtCore.QRect(430, 590, 151, 16))
         self.label_5.setStyleSheet("font: 12pt \"Century Gothic\";")
         self.label_5.setObjectName("label_5")
         
         self.lastname = QtWidgets.QLineEdit(self.widget)
-        self.lastname.setGeometry(QtCore.QRect(430, 540, 421, 41))
+        self.lastname.setGeometry(QtCore.QRect(430, 610, 421, 41))
         self.lastname.setObjectName("lastname")
         
         # Password field
         self.label_6 = QtWidgets.QLabel(self.widget)
-        self.label_6.setGeometry(QtCore.QRect(430, 590, 151, 16))
+        self.label_6.setGeometry(QtCore.QRect(430, 660, 151, 16))
         self.label_6.setStyleSheet("font: 12pt \"Century Gothic\";")
         self.label_6.setObjectName("label_6")
         
         self.password = QtWidgets.QLineEdit(self.widget)
-        self.password.setGeometry(QtCore.QRect(430, 610, 421, 41))
+        self.password.setGeometry(QtCore.QRect(430, 680, 421, 41))
         self.password.setEchoMode(QtWidgets.QLineEdit.Password)
         self.password.setObjectName("password")
         
         # Confirm Password field
         self.label_7 = QtWidgets.QLabel(self.widget)
-        self.label_7.setGeometry(QtCore.QRect(430, 660, 200, 16))
+        self.label_7.setGeometry(QtCore.QRect(430, 730, 200, 16))
         self.label_7.setStyleSheet("font: 12pt \"Century Gothic\";")
         self.label_7.setObjectName("label_7")
         
         self.confirmpassword = QtWidgets.QLineEdit(self.widget)
-        self.confirmpassword.setGeometry(QtCore.QRect(430, 680, 421, 41))
+        self.confirmpassword.setGeometry(QtCore.QRect(430, 750, 421, 41))
         self.confirmpassword.setEchoMode(QtWidgets.QLineEdit.Password)
         self.confirmpassword.setObjectName("confirmpassword")
         
         # Create Account button
         self.create_button = QtWidgets.QPushButton(self.widget)
-        self.create_button.setGeometry(QtCore.QRect(440, 730, 391, 61))
+        self.create_button.setGeometry(QtCore.QRect(440, 800, 391, 61))
         self.create_button.setStyleSheet("border-radius: 20px;\n"
 "background-color:rgb(187, 216, 163);\n"
 "font: 75 18pt \"Century Gothic\";\n"
@@ -130,7 +140,7 @@ class CreateAccountScreen(object):
         
         # Error message label
         self.error_label = QtWidgets.QLabel(self.widget)
-        self.error_label.setGeometry(QtCore.QRect(430, 800, 421, 31))
+        self.error_label.setGeometry(QtCore.QRect(430, 870, 421, 31))
         self.error_label.setStyleSheet("font: 75 italic 12pt \"Century Gothic\";color:red;")
         self.error_label.setText("")
         self.error_label.setObjectName("error_label")
@@ -149,6 +159,10 @@ class CreateAccountScreen(object):
         # Load all locations from the database
         self.locations = self.database.get_all_locations()
         
+        # Populate location dropdown
+        for location in self.locations:
+            self.location_combo.addItem(location[1], location[0])
+        
         # Apply initial visibility based on default radio selection
         self.toggle_organization_visibility()
         
@@ -160,6 +174,8 @@ class CreateAccountScreen(object):
         is_admin = self.admin_radio.isChecked()
         self.label_9.setVisible(not is_admin)
         self.organization.setVisible(not is_admin)
+        self.label_10.setVisible(not is_admin)
+        self.location_combo.setVisible(not is_admin)
         
         # When admin is selected, clear the organization field
         if is_admin:
@@ -172,47 +188,47 @@ class CreateAccountScreen(object):
             form_width = 421
             form_x = int(parent_width / 2 - form_width / 2)
             
-            # Amount to shift elements (organization field height + spacing)
-            shift = 70 if is_admin else 0
+            # Amount to shift elements (organization field height + spacing + location field height + spacing)
+            shift = 140 if is_admin else 0
             
             # Username field
-            username_y_label = 380 - shift if is_admin else 380
-            username_y_field = 400 - shift if is_admin else 400
+            username_y_label = 450 - shift if is_admin else 450
+            username_y_field = 470 - shift if is_admin else 470
             self.label_3.setGeometry(QtCore.QRect(form_x, username_y_label, 121, 16))
             self.username.setGeometry(QtCore.QRect(form_x, username_y_field, form_width, 41))
             
             # First Name field
-            firstname_y_label = 450 - shift if is_admin else 450
-            firstname_y_field = 470 - shift if is_admin else 470
+            firstname_y_label = 520 - shift if is_admin else 520
+            firstname_y_field = 540 - shift if is_admin else 540
             self.label_4.setGeometry(QtCore.QRect(form_x, firstname_y_label, 151, 16))
             self.firstname.setGeometry(QtCore.QRect(form_x, firstname_y_field, form_width, 41))
             
             # Last Name field
-            lastname_y_label = 520 - shift if is_admin else 520
-            lastname_y_field = 540 - shift if is_admin else 540
+            lastname_y_label = 590 - shift if is_admin else 590
+            lastname_y_field = 610 - shift if is_admin else 610
             self.label_5.setGeometry(QtCore.QRect(form_x, lastname_y_label, 151, 16))
             self.lastname.setGeometry(QtCore.QRect(form_x, lastname_y_field, form_width, 41))
             
             # Password field
-            password_y_label = 590 - shift if is_admin else 590
-            password_y_field = 610 - shift if is_admin else 610
+            password_y_label = 660 - shift if is_admin else 660
+            password_y_field = 680 - shift if is_admin else 680
             self.label_6.setGeometry(QtCore.QRect(form_x, password_y_label, 151, 16))
             self.password.setGeometry(QtCore.QRect(form_x, password_y_field, form_width, 41))
             
             # Confirm Password field
-            confirm_y_label = 660 - shift if is_admin else 660
-            confirm_y_field = 680 - shift if is_admin else 680
+            confirm_y_label = 730 - shift if is_admin else 730
+            confirm_y_field = 750 - shift if is_admin else 750
             self.label_7.setGeometry(QtCore.QRect(form_x, confirm_y_label, 200, 16))
             self.confirmpassword.setGeometry(QtCore.QRect(form_x, confirm_y_field, form_width, 41))
             
             # Create Account button
             button_width = 391
             center_x = int(parent_width / 2)
-            create_y = 730 - shift if is_admin else 730
+            create_y = 800 - shift if is_admin else 800
             self.create_button.setGeometry(QtCore.QRect(int(center_x - button_width/2), create_y, button_width, 61))
             
             # Error message label
-            error_y = 800 - shift if is_admin else 800
+            error_y = 870 - shift if is_admin else 870
             self.error_label.setGeometry(QtCore.QRect(int(center_x - form_width/2), error_y, form_width, 31))
         
     def handle_resize_event(self, event):
@@ -246,29 +262,33 @@ class CreateAccountScreen(object):
             self.label_9.setGeometry(QtCore.QRect(form_x, 310, 151, 16))
             self.organization.setGeometry(QtCore.QRect(form_x, 330, form_width, 41))
             
+            # Location field
+            self.label_10.setGeometry(QtCore.QRect(form_x, 380, 151, 16))
+            self.location_combo.setGeometry(QtCore.QRect(form_x, 400, form_width, 41))
+            
             # Username field
-            self.label_3.setGeometry(QtCore.QRect(form_x, 380, 121, 16))
-            self.username.setGeometry(QtCore.QRect(form_x, 400, form_width, 41))
+            self.label_3.setGeometry(QtCore.QRect(form_x, 450, 121, 16))
+            self.username.setGeometry(QtCore.QRect(form_x, 470, form_width, 41))
             
             # First Name field
-            self.label_4.setGeometry(QtCore.QRect(form_x, 450, 151, 16))
-            self.firstname.setGeometry(QtCore.QRect(form_x, 470, form_width, 41))
+            self.label_4.setGeometry(QtCore.QRect(form_x, 520, 151, 16))
+            self.firstname.setGeometry(QtCore.QRect(form_x, 540, form_width, 41))
             
             # Last Name field
-            self.label_5.setGeometry(QtCore.QRect(form_x, 520, 151, 16))
-            self.lastname.setGeometry(QtCore.QRect(form_x, 540, form_width, 41))
+            self.label_5.setGeometry(QtCore.QRect(form_x, 590, 151, 16))
+            self.lastname.setGeometry(QtCore.QRect(form_x, 610, form_width, 41))
             
             # Password field
-            self.label_6.setGeometry(QtCore.QRect(form_x, 590, 151, 16))
-            self.password.setGeometry(QtCore.QRect(form_x, 610, form_width, 41))
+            self.label_6.setGeometry(QtCore.QRect(form_x, 660, 151, 16))
+            self.password.setGeometry(QtCore.QRect(form_x, 680, form_width, 41))
             
             # Confirm Password field
-            self.label_7.setGeometry(QtCore.QRect(form_x, 660, 200, 16))
-            self.confirmpassword.setGeometry(QtCore.QRect(form_x, 680, form_width, 41))
+            self.label_7.setGeometry(QtCore.QRect(form_x, 730, 200, 16))
+            self.confirmpassword.setGeometry(QtCore.QRect(form_x, 750, form_width, 41))
             
             # Create Account button
             button_width = 391
-            self.create_button.setGeometry(QtCore.QRect(int(center_x - button_width/2), 730, button_width, 61))
+            self.create_button.setGeometry(QtCore.QRect(int(center_x - button_width/2), 800, button_width, 61))
             
             # Calculate margin for left side
             margin_x = max(50, int((parent_width - 1100) / 2))
@@ -278,7 +298,7 @@ class CreateAccountScreen(object):
             self.back_button.setGeometry(QtCore.QRect(margin_x, back_button_y, 161, 41))
             
             # Error message label - center under create button
-            self.error_label.setGeometry(QtCore.QRect(int(center_x - form_width/2), 800, form_width, 31))
+            self.error_label.setGeometry(QtCore.QRect(int(center_x - form_width/2), 870, form_width, 31))
             
             # Apply organization visibility effects to adjust spacing
             self.toggle_organization_visibility()
@@ -292,6 +312,7 @@ class CreateAccountScreen(object):
         self.admin_radio.setText(_translate("Widget", "Admin"))
         self.user_radio.setText(_translate("Widget", "User"))
         self.label_9.setText(_translate("Widget", "ORGANIZATION"))
+        self.label_10.setText(_translate("Widget", "LOCATION"))
         self.label_3.setText(_translate("Widget", "USERNAME"))
         self.label_4.setText(_translate("Widget", "FIRST NAME"))
         self.label_5.setText(_translate("Widget", "LAST NAME"))
@@ -312,6 +333,11 @@ class CreateAccountScreen(object):
         confirm_password = self.confirmpassword.text()
         organization = self.organization.text()
         
+        # Get selected location ID from combo box
+        location_id = None
+        if self.location_combo.currentIndex() >= 0:
+            location_id = self.location_combo.currentData()
+        
         # Check if admin radio button is selected
         user_type = 1 if self.admin_radio.isChecked() else 0
         
@@ -324,10 +350,15 @@ class CreateAccountScreen(object):
             self.error_label.setText("Passwords do not match")
             return
         
-        # Regular users should have an organization
-        if user_type == 0 and not organization:
-            self.error_label.setText("Please enter an organization for the user")
-            return
+        # Regular users should have an organization and location
+        if user_type == 0:
+            if not organization:
+                self.error_label.setText("Please enter an organization for the user")
+                return
+                
+            if location_id is None:
+                self.error_label.setText("Please select a location for the organization")
+                return
             
         # Create account in database
         user_code, error = self.database.create_account(username, firstname, lastname, password, confirm_password, user_type)
@@ -338,11 +369,8 @@ class CreateAccountScreen(object):
         
         # If user is not admin and organization is provided, create the organization
         if user_type == 0 and organization:
-            # Use the first location as default (typically Manila)
-            default_location = self.locations[0][0] if self.locations else "MN"
-            
             # Add organization
-            org_id, org_error = self.database.add_organization(organization, user_code, default_location)
+            org_id, org_error = self.database.add_organization(organization, user_code, location_id)
             
             if org_error:
                 self.error_label.setText(f"Account created but could not add organization: {org_error}")
